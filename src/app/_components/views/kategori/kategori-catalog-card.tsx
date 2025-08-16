@@ -28,7 +28,10 @@ export default function KategoriCatalogCard({
   onEdit?: () => void;
 }) {
   return (
-    <Card key={id} className="@container/card flex flex-col justify-between">
+    <Card
+      key={id}
+      className="@container/card flex flex-col justify-between gap-2"
+    >
       <CardHeader>
         <CardDescription>Tipe</CardDescription>
         <CardAction>
@@ -42,11 +45,12 @@ export default function KategoriCatalogCard({
             {type}
           </Badge>
         </CardAction>
+      </CardHeader>
+      <CardContent className="flex flex-col">
         <CardTitle className="text-lg font-semibold tabular-nums @[250px]/card:text-2xl">
           {name}
         </CardTitle>
-      </CardHeader>
-      {/* <CardContent className="flex flex-col gap-2"></CardContent> */}
+      </CardContent>
       <CardFooter className="flex-col items-start justify-between">
         <p className="text-muted-foreground text-sm">
           Dibuat oleh: <span className="font-bold text-white">{createdBy}</span>

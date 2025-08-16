@@ -1,6 +1,7 @@
 import z from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { type Prisma, TypeKategori } from "@prisma/client";
+import { kategoriFormSchema } from "@/types/kategori.types";
 
 export const kategoriRouter = createTRPCRouter({
   getKategori: protectedProcedure
@@ -43,12 +44,13 @@ export const kategoriRouter = createTRPCRouter({
 
   createKategori: protectedProcedure
     .input(
-      z.object({
-        name: z.string().min(1, "Nama kategori tidak boleh kosong"),
-        type: z.enum([TypeKategori.PEMASUKAN, TypeKategori.PENGELUARAN], {
-          required_error: "Tipe kategori harus dipilih",
-        }),
-      }),
+      // z.object({
+      //   name: z.string().min(1, "Nama kategori tidak boleh kosong"),
+      //   type: z.enum([TypeKategori.PEMASUKAN, TypeKategori.PENGELUARAN], {
+      //     required_error: "Tipe kategori harus dipilih",
+      //   }),
+      // }),
+      kategoriFormSchema,
     )
     .mutation(async ({ input, ctx }) => {
       const { db } = ctx;
@@ -57,11 +59,13 @@ export const kategoriRouter = createTRPCRouter({
         data: {
           name: input.name,
           type: input.type,
-          createdBy: { connect: { id: ctx.session.user.id } },
+          // createdBy: { connect: { id: ctx.session.user.id } },
+          createdById: ctx.session.user.id,
         },
       });
       return result;
     }),
+
   deleteKategori: protectedProcedure
     .input(z.object({ kategoriId: z.string().uuid() }))
     .mutation(async ({ input, ctx }) => {
@@ -75,12 +79,8 @@ export const kategoriRouter = createTRPCRouter({
 
   editKategori: protectedProcedure
     .input(
-      z.object({
+      kategoriFormSchema.extend({
         kategoriId: z.string().uuid(),
-        name: z.string().min(1, "Nama kategori tidak boleh kosong"),
-        type: z.enum([TypeKategori.PEMASUKAN, TypeKategori.PENGELUARAN], {
-          required_error: "Tipe kategori harus dipilih",
-        }),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -94,5 +94,7 @@ export const kategoriRouter = createTRPCRouter({
           type,
         },
       });
+
+      return result;
     }),
 });

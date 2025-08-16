@@ -1,6 +1,16 @@
 import { TypeKategori } from "@prisma/client";
 import { z } from "zod";
 
+export type KategoriType = {
+  id: string;
+  name: string;
+  type: TypeKategori;
+  createdBy: {
+    id: string;
+    name: string | null;
+  };
+};
+
 export const kategoriFormSchema = z.object({
   name: z.string().min(1, {
     message: "Nama kategori tidak boleh kosong",

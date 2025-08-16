@@ -8,15 +8,15 @@ import type { NextAuthRequest } from "node_modules/next-auth/lib";
 export default auth((req: NextAuthRequest) => {
   //  { session: { user: { ... } } }
   const session = req.auth;
-  console.log(
-    "session in middleware",
-    req.auth,
-    "expires at: ",
-    session?.expires,
-  );
+  // console.log(
+  //   "session in middleware",
+  //   req.auth,
+  //   "expires at: ",
+  //   session?.expires,
+  // );
   const pathname = req.nextUrl.pathname;
 
-  console.log("Middleware pathname:", pathname);
+  // console.log("Middleware pathname:", pathname);
 
   if (!session) {
     if (pathname.startsWith("/dashboard")) {

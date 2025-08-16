@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
-import { loginFormSchema, type LoginFormSchema } from "@/types/user.form";
+import { loginFormSchema, type LoginFormSchema } from "@/types/user.types";
 import { useForm } from "react-hook-form";
 // import { Label } from "@/components/ui/label";
 import { signIn } from "next-auth/react";

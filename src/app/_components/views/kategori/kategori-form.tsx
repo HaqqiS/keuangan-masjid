@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { KategoriFormSchema } from "@/types/kategori.form";
+import type { KategoriFormSchema } from "@/types/kategori.types";
 import { TypeKategori } from "@prisma/client";
 import { useFormContext } from "react-hook-form";
 
