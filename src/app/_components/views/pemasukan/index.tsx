@@ -8,9 +8,10 @@ import {
 } from "../../layouts/dashboard-layout-view";
 import { DataTable } from "../../shared/data-table-generic";
 import { columns as createColumns } from "./pemasukan-columns";
-import type {
-  PemasukanFormSchema,
-  PemasukanType,
+import {
+  pemasukanFormSchema,
+  type PemasukanFormSchema,
+  type PemasukanType,
 } from "@/types/pemasukan.types";
 import {
   Drawer,
@@ -37,21 +38,24 @@ import PemasukanForm from "./pemasukan-form";
 import { useForm } from "react-hook-form";
 import { api } from "@/trpc/react";
 import { PemasukanEditDrawer } from "./pamasukan-edit-drawer";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 
 interface PemasukanViewPageProps {
   initialData: PemasukanType[]; // Menerima data sebagai prop
 }
 
-// Komponen ini hanya bertanggung jawab untuk menampilkan UI
 export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
   const apiUtils = api.useUtils();
   const isMobile = useIsMobile();
   const [createFormPemasukanOpen, setCreateFormPemasukanOpen] = useState(false);
   const [editFormPemasukanOpen, setEditFormPemasukanOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<PemasukanType | null>(null);
+  const [selectedPemasukanToEdit, setSelectedPemasukanToEdit] =
+    useState<PemasukanType | null>(null);
 
   // FORM HANDLING
   const createPemasukanForm = useForm<PemasukanFormSchema>({
+    resolver: zodResolver(pemasukanFormSchema),
     defaultValues: {
       name: "",
       jumlah: 0,
@@ -60,21 +64,46 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
     },
   });
 
+  const editPemasukanForm = useForm<PemasukanFormSchema>({
+    resolver: zodResolver(pemasukanFormSchema),
+  });
+
   // MUTATION & QUERY
-  const { data: pemasukanData } = api.pemasukan.getPemasukan.useQuery();
+  const { data: pemasukanData } = api.pemasukan.getPemasukan.useQuery(
+    undefined,
+    { initialData: initialData },
+  );
+
+  console.log("Pemasukan Data:", pemasukanData);
 
   const { mutate: createPemasukan, isPending: isPendingCreate } =
     api.pemasukan.createPemasukan.useMutation({
       onSuccess: async () => {
-        await apiUtils.pemasukan.invalidate();
+        await apiUtils.pemasukan.getPemasukan.invalidate();
         createPemasukanForm.reset();
         setCreateFormPemasukanOpen(false);
+        toast.success("Pemasukan berhasil dibuat");
+      },
+      onError: (error) => {
+        toast.error(`Gagal membuat Pemasukan: ${error.message}`);
+      },
+    });
+
+  const { mutate: updatePemasukan, isPending: isPendingUpdate } =
+    api.pemasukan.updatePemasukan.useMutation({
+      onSuccess: async () => {
+        await apiUtils.pemasukan.getPemasukan.invalidate();
+        toast.success("Pemasukan berhasil diperbarui");
+        setEditFormPemasukanOpen(false);
+        editPemasukanForm.reset();
+      },
+      onError: (error) => {
+        toast.error(`Gagal memperbarui Pemasukan: ${error.message}`);
       },
     });
 
   // HANDLERS
   const handleSubmitCreatePemasukan = (data: PemasukanFormSchema) => {
-    console.log(data);
     createPemasukan({
       name: data.name,
       jumlah: data.jumlah,
@@ -84,8 +113,22 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
   };
 
   const handleOpenDrawer = (item: PemasukanType) => {
-    setSelectedItem(item); // Simpan data item yang di-klik
+    setSelectedPemasukanToEdit(item); // Simpan data item yang di-klik
     setEditFormPemasukanOpen(true); // Buka drawer-nya
+
+    editPemasukanForm.reset({
+      name: item.name,
+      jumlah: item.jumlah,
+      keterangan: item.keterangan ?? "",
+      kategoriId: item.kategori.id,
+    });
+  };
+
+  const handleSubmitEditPemasukan = (data: PemasukanFormSchema) => {
+    // console.log("Submit Edit Pemasukan", editPemasukanForm.getValues());
+    if (!selectedPemasukanToEdit) return;
+
+    updatePemasukan({ id: selectedPemasukanToEdit.id, ...data });
   };
 
   const columns = createColumns({ onEditClick: handleOpenDrawer });
@@ -99,13 +142,16 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
 
   return (
     <>
-      {selectedItem && (
+      {selectedPemasukanToEdit && (
         <PemasukanEditDrawer
-          item={selectedItem}
           isOpen={editFormPemasukanOpen}
           setIsOpen={setEditFormPemasukanOpen}
+          form={editPemasukanForm}
+          handleSubmitEditPemasukan={handleSubmitEditPemasukan}
+          isPending={isPendingUpdate}
         />
       )}
+
       <div className="px-4 lg:px-6">
         <DashboardHeader>
           <div className="flex items-center justify-between gap-2">
@@ -185,7 +231,7 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
           </div>
         </DashboardHeader>
 
-        <DataTable data={initialData} columns={columns} />
+        <DataTable data={pemasukanData} columns={columns} />
       </div>
     </>
   );

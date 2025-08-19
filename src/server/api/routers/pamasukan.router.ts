@@ -78,4 +78,22 @@ export const pemasukanRouter = createTRPCRouter({
 
       return result;
     }),
+
+  updatePemasukan: protectedProcedure
+    .input(pemasukanFormSchema.extend({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { db } = ctx;
+
+      const result = await db.pemasukan.update({
+        where: { id: input.id },
+        data: {
+          name: input.name,
+          keterangan: input.keterangan,
+          jumlah: input.jumlah,
+          kategoriId: input.kategoriId,
+        },
+      });
+
+      return result;
+    }),
 });

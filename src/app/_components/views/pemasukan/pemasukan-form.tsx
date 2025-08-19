@@ -26,6 +26,8 @@ type PemasukanFormProps = {
 export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
   const form = useFormContext<PemasukanFormSchema>();
 
+  console.log("Form Values:", form.getValues());
+
   const { data: kategoris } = api.kategori.getKategori.useQuery({
     type: TypeKategori.PEMASUKAN,
   });

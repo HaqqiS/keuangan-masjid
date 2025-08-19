@@ -1,4 +1,4 @@
-import { postRouter } from "@/server/api/routers/post";
+import { postRouter } from "@/server/api/routers/post.router";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { kategoriRouter } from "./routers/kategori.router";
 import { pemasukanRouter } from "./routers/pamasukan.router";
