@@ -15,10 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toRupiah } from "@/utils/toRupiah";
-import type {
-  PengeluaranType,
-  PengeluaranTypeRouter,
-} from "@/types/pengeluaran.type";
+import type { PengeluaranTypeRouter } from "@/types/pengeluaran.type";
 import { dateFormatter } from "@/utils/dateFormatter";
 
 // Create a separate component for the drag handle

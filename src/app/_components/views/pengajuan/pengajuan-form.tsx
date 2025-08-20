@@ -68,7 +68,7 @@ export default function PengajuanForm({ onSubmit }: PengajuanFormProps) {
             )}
           />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3">
           <FormField
             control={form.control}
             name="jumlah"
@@ -87,7 +87,8 @@ export default function PengajuanForm({ onSubmit }: PengajuanFormProps) {
               </FormItem>
             )}
           />
-
+        </div>
+        <div className="grid gap-3">
           <FormField
             control={form.control}
             name="kategoriId"

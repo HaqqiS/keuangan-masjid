@@ -1,7 +1,10 @@
 "use client";
-import type {
-  PengeluaranType,
-  PengeluaranTypeRouter,
+import {
+  editPengeluaranFormSchema,
+  pengeluaranFormSchema,
+  type EditPengeluaranFormSchema,
+  type PengeluaranFormSchema,
+  type PengeluaranTypeRouter,
 } from "@/types/pengeluaran.type";
 import {
   DashboardDescription,
@@ -11,6 +14,34 @@ import {
 import { DataTable } from "../../shared/data-table-generic";
 import { columns as createColumns } from "./pengeluaran-columns";
 import { api } from "@/trpc/react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { use, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import PengeluaranCreateForm from "./pengeluaran-create-form";
+import { toast } from "sonner";
+import { PengeluaranEditDrawer } from "./pengeluaran-edit-drawer";
 
 interface PengeluaranPageViewProps {
   initialData: PengeluaranTypeRouter[];
@@ -19,18 +50,119 @@ interface PengeluaranPageViewProps {
 export default function PengeluaranPageView({
   initialData,
 }: PengeluaranPageViewProps) {
+  const isMobile = useIsMobile();
+  const apiUtils = api.useUtils();
+
+  const [createFormPengeluaranOpen, setCreateFormPengeluaranOpen] =
+    useState(false);
+  const [deletePengeluaranDialogOpen, setDeletePengeluaranDialogOpen] =
+    useState(false);
+  const [selectedPengeluaranToDelete, setSelectedPengeluaranToDelete] =
+    useState<{ id: string; name: string } | null>(null);
+  const [editFormPengeluaranOpen, setEditFormPengeluaranOpen] = useState(false);
+  const [selectedPengeluaranToEdit, setSelectedPengeluaranToEdit] =
+    useState<PengeluaranTypeRouter | null>(null);
+
+  // FORM HANDLING
+  const createPengeluaranForm = useForm<PengeluaranFormSchema>({
+    resolver: zodResolver(pengeluaranFormSchema),
+    defaultValues: {
+      name: "",
+      jumlah: 0,
+      keterangan: "",
+      kategoriId: "",
+    },
+  });
+  const editPengeluaranForm = useForm<EditPengeluaranFormSchema>({
+    resolver: zodResolver(editPengeluaranFormSchema),
+  });
+
   // QUERIES MUTATIONS
-  const { data: dataPengeluaran, isLoading: isLoadingPengeluaran } =
-    api.pengeluaran.getPengeluaran.useQuery(undefined, {
-      initialData: initialData,
+  const { data: dataPengeluaran } = api.pengeluaran.getPengeluaran.useQuery(
+    undefined,
+    { initialData: initialData },
+  );
+  const { mutate: createPengeluaran, isPending: isPendingCreate } =
+    api.pengeluaran.createPengeluaran.useMutation({
+      onSuccess: async () => {
+        await apiUtils.pengeluaran.getPengeluaran.invalidate();
+        createPengeluaranForm.reset();
+        setCreateFormPengeluaranOpen(false);
+        toast.success("Pengeluaran berhasil ditambahkan");
+      },
+      onError: (error) => {
+        toast.error("Pengeluaran gagal ditambahkan", {
+          description: error.message,
+        });
+      },
     });
 
-  const handleClickEditPengeluaran = () => {
-    console.log("Edit");
+  const { mutate: deletePengeluaran, isPending: isPendingDelete } =
+    api.pengeluaran.deletePengeluaran.useMutation({
+      onSuccess: async () => {
+        await apiUtils.pengeluaran.getPengeluaran.invalidate();
+        setDeletePengeluaranDialogOpen(false);
+        setSelectedPengeluaranToDelete(null);
+        toast.success("Pengeluaran berhasil dihapus");
+      },
+      onError: (error) => {
+        toast.error("Pengeluaran gagal dihapus", {
+          description: error.message,
+        });
+      },
+    });
+
+  const { mutate: updatePengeluaran, isPending: isPendingUpdate } =
+    api.pengeluaran.updatePengeluaran.useMutation({
+      onSuccess: async () => {
+        await apiUtils.pengeluaran.getPengeluaran.invalidate();
+        setEditFormPengeluaranOpen(false);
+        setSelectedPengeluaranToEdit(null);
+        toast.success("Pengeluaran berhasil diperbarui");
+      },
+      onError: (error) => {
+        toast.error("Pengeluaran gagal diperbarui", {
+          description: error.message,
+        });
+      },
+    });
+
+  // HANDLERS
+  const handleSubmitCreatePengeluaran = (data: PengeluaranFormSchema) => {
+    createPengeluaran(data);
   };
 
-  const handleClickDeletePengeluaran = () => {
-    console.log("Delete");
+  const handleClickDeletePengeluaran = (
+    pengeluaranId: string,
+    pengeluaranName: string,
+  ) => {
+    setSelectedPengeluaranToDelete({
+      id: pengeluaranId,
+      name: pengeluaranName,
+    });
+    setDeletePengeluaranDialogOpen(true);
+  };
+  const handleSubmitDeletePengeluaran = () => {
+    if (!selectedPengeluaranToDelete) return;
+    deletePengeluaran({ pengeluaranId: selectedPengeluaranToDelete.id });
+  };
+
+  const handleClickEditPengeluaran = (pengeluaran: PengeluaranTypeRouter) => {
+    setSelectedPengeluaranToEdit(pengeluaran);
+    setEditFormPengeluaranOpen(true);
+
+    editPengeluaranForm.reset({
+      name: pengeluaran.name,
+      jumlah: pengeluaran.jumlah,
+      keterangan: pengeluaran.keterangan ?? "",
+      kategoriId: pengeluaran.kategori.id,
+      pengajuanId: pengeluaran.pengajuan?.id,
+    });
+  };
+
+  const handleSubmitEditPengeluaran = (data: EditPengeluaranFormSchema) => {
+    if (!selectedPengeluaranToEdit) return;
+    updatePengeluaran({ id: selectedPengeluaranToEdit.id, ...data });
   };
 
   const columns = createColumns({
@@ -40,6 +172,46 @@ export default function PengeluaranPageView({
 
   return (
     <>
+      {/* EDIT DRAWER */}
+      {selectedPengeluaranToEdit && (
+        <PengeluaranEditDrawer
+          isOpen={editFormPengeluaranOpen}
+          setIsOpen={setEditFormPengeluaranOpen}
+          form={editPengeluaranForm}
+          handleSubmitEditPengeluaran={handleSubmitEditPengeluaran}
+          isPending={isPendingUpdate}
+        />
+      )}
+
+      {/* DELETE DIALOG */}
+      <AlertDialog
+        open={deletePengeluaranDialogOpen}
+        onOpenChange={setDeletePengeluaranDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Pengeluaran</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Yakin ingin menghapus pengeluaran{" "}
+            <span className="text-accent-foreground font-bold">
+              {selectedPengeluaranToDelete?.name}{" "}
+            </span>
+            ini? Tindakan ini tidak dapat dibatalkan.
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleSubmitDeletePengeluaran}
+              disabled={isPendingDelete}
+            >
+              Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="px-4 lg:px-6">
         <DashboardHeader>
           <div className="flex items-center justify-between gap-2">
@@ -50,6 +222,77 @@ export default function PengeluaranPageView({
                 Anda.
               </DashboardDescription>
             </div>
+
+            {isMobile ? (
+              <Drawer
+                direction={isMobile ? "bottom" : "right"}
+                open={createFormPengeluaranOpen}
+                onOpenChange={setCreateFormPengeluaranOpen}
+              >
+                <DrawerTrigger asChild>
+                  <Button>Tambah</Button>
+                </DrawerTrigger>
+                <DrawerContent>
+                  <DrawerHeader className="pb-0">
+                    <DrawerTitle>Tambah Pengeluaran Baru</DrawerTitle>
+                  </DrawerHeader>
+
+                  <div className="flex flex-col overflow-y-auto p-4">
+                    <Form {...createPengeluaranForm}>
+                      <PengeluaranCreateForm
+                        onSubmit={handleSubmitCreatePengeluaran}
+                      />
+                    </Form>
+                  </div>
+
+                  <DrawerFooter className="pt-2">
+                    <Button
+                      onClick={createPengeluaranForm.handleSubmit(
+                        handleSubmitCreatePengeluaran,
+                      )}
+                      disabled={isPendingCreate}
+                    >
+                      Buat Pengeluaran
+                    </Button>
+                    <DrawerClose asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </DrawerClose>
+                  </DrawerFooter>
+                </DrawerContent>
+              </Drawer>
+            ) : (
+              <AlertDialog
+                open={createFormPengeluaranOpen}
+                onOpenChange={setCreateFormPengeluaranOpen}
+              >
+                <AlertDialogTrigger asChild>
+                  <Button>Tambah Pengeluaran</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Tambah Pengeluaran Baru</AlertDialogTitle>
+                  </AlertDialogHeader>
+
+                  <Form {...createPengeluaranForm}>
+                    <PengeluaranCreateForm
+                      onSubmit={handleSubmitCreatePengeluaran}
+                    />
+                  </Form>
+
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <Button
+                      onClick={createPengeluaranForm.handleSubmit(
+                        handleSubmitCreatePengeluaran,
+                      )}
+                      disabled={isPendingCreate}
+                    >
+                      Buat Pengeluaran
+                    </Button>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </DashboardHeader>
 

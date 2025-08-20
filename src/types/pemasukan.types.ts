@@ -1,7 +1,15 @@
+import type { AppRouter } from "@/server/api/root";
+import type { inferRouterOutputs } from "@trpc/server";
 import { z } from "zod";
 
-// 2. TIPE KLIEN: Data yang siap digunakan oleh komponen UI seperti DataTable
-// Tipe ini adalah tujuan akhir dari proses transformasi kita.
+// 1. Buat tipe helper untuk semua output router Anda
+type RouterOutputs = inferRouterOutputs<AppRouter>;
+
+// 2. Ambil tipe spesifik dari output endpoint 'getPengeluaran'
+//    [number] digunakan untuk mengambil tipe satu objek dari array yang dikembalikan
+export type PengeluaranTypeRouter =
+  RouterOutputs["pemasukan"]["getPemasukan"][number];
+
 export type PemasukanType = {
   id: string;
   name: string;
@@ -30,7 +38,7 @@ export const pemasukanFormSchema = z.object({
     .string()
     .max(255, { message: "Keterangan tidak boleh lebih dari 255 karakter" })
     .optional(),
-  kategoriId: z.string().uuid(),
+  kategoriId: z.string().uuid({ message: "Kategori tidak valid" }),
 });
 
 export type PemasukanFormSchema = z.infer<typeof pemasukanFormSchema>;

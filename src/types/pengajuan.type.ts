@@ -27,7 +27,7 @@ export const pengajuanFormSchema = z.object({
   //     { required_error: "Status harus dipilih" },
   //   )
   //   .default(StatusPengajuan.PENDING),
-  kategoriId: z.string().uuid(),
+  kategoriId: z.string().uuid({ message: "Kategori tidak valid" }),
 });
 
 export const editStatusPengajuanFormSchema = pengajuanFormSchema.extend({

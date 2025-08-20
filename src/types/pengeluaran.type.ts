@@ -34,14 +34,25 @@ export type PengeluaranType = {
 
 export const pengeluaranFormSchema = z.object({
   name: string().min(1, { message: "Nama pengeluaran tidak boleh kosong" }),
-  jumlah: z
+  jumlah: z.coerce
     .number()
     .min(1, { message: "Jumlah pengeluaran tidak boleh kosong" }),
   keterangan: string()
     .max(255, { message: "Keterangan tidak boleh lebih dari 255 karakter" })
     .optional(),
-  kategoriId: z.string().uuid(),
+  kategoriId: z.string().uuid({ message: "Kategori tidak valid" }),
   pengajuanId: z.string().uuid().optional(),
 });
 
+export const editPengeluaranFormSchema = pengeluaranFormSchema.extend({
+  pengajuanId: z
+    .string()
+    .uuid({ message: "Pengajuan tidak valid" })
+    .nullable()
+    .optional(),
+});
+
 export type PengeluaranFormSchema = z.infer<typeof pengeluaranFormSchema>;
+export type EditPengeluaranFormSchema = z.infer<
+  typeof editPengeluaranFormSchema
+>;

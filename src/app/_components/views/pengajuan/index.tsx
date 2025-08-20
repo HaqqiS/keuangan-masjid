@@ -103,6 +103,7 @@ export default function PengajuanPageView({
         toast.success("Pengajuan berhasil diperbarui");
         setSelectedPengajuanToEdit(null);
         setEditFormPengajuanOpen(false);
+        editPengajuanForm.reset();
       },
     });
 

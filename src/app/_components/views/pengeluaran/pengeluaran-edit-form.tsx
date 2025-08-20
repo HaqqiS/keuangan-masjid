@@ -15,20 +15,24 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
-import type { PemasukanFormSchema } from "@/types/pemasukan.types";
+import type { PengeluaranFormSchema } from "@/types/pengeluaran.type";
 import { TypeKategori } from "@prisma/client";
 import { useFormContext } from "react-hook-form";
 
-type PemasukanFormProps = {
-  onSubmit: (data: PemasukanFormSchema) => void;
+type PengeluaranEditFormProps = {
+  onSubmit: (data: PengeluaranFormSchema) => void;
 };
 
-export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
-  const form = useFormContext<PemasukanFormSchema>();
+export default function PengeluaranEditForm({
+  onSubmit,
+}: PengeluaranEditFormProps) {
+  const form = useFormContext<PengeluaranFormSchema>();
 
   const { data: kategoris } = api.kategori.getKategori.useQuery({
-    type: TypeKategori.PEMASUKAN,
+    type: TypeKategori.PENGELUARAN,
   });
+
+  const { data: pengajuans } = api.pengajuan.getPengajuan.useQuery();
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -39,7 +43,7 @@ export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nama Pemasukan</FormLabel>
+                <FormLabel>Nama Pengeluaran</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Infaq Jumat Pertama"
@@ -79,19 +83,58 @@ export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
             name="kategoriId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Kategori Pemasukan</FormLabel>
+                <FormLabel>Kategori Pengeluaran</FormLabel>
                 <FormControl>
                   <Select
                     value={field.value}
                     onValueChange={(value) => field.onChange(value)}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Pilih kategori" />
+                      <SelectValue
+                        placeholder="Pilih kategori"
+                        className="break-words whitespace-normal"
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {kategoris?.map((kategori) => (
                         <SelectItem key={kategori.id} value={kategori.id}>
-                          {kategori.name}
+                          <span className="break-words whitespace-normal">
+                            {kategori.name}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="grid gap-3">
+          <FormField
+            control={form.control}
+            name="pengajuanId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Pengajuan</FormLabel>
+                <FormControl>
+                  <Select
+                    value={field.value ?? "none"}
+                    onValueChange={(value) => {
+                      field.onChange(value === "none" ? null : value);
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih pengajuan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">
+                        <span className="text-muted-foreground">Tidak Ada</span>
+                      </SelectItem>
+                      {pengajuans?.map((pengajuan) => (
+                        <SelectItem key={pengajuan.id} value={pengajuan.id}>
+                          {pengajuan.judul}
                         </SelectItem>
                       ))}
                     </SelectContent>

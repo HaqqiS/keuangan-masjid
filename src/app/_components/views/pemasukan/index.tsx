@@ -90,7 +90,9 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
         toast.success("Pemasukan berhasil dibuat");
       },
       onError: (error) => {
-        toast.error(`Gagal membuat Pemasukan: ${error.message}`);
+        toast.error("Pemasukan gagal ditambahkan", {
+          description: error.message,
+        });
       },
     });
 
@@ -103,7 +105,9 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
         editPemasukanForm.reset();
       },
       onError: (error) => {
-        toast.error(`Gagal memperbarui Pemasukan: ${error.message}`);
+        toast.error("Pengeluaran gagal diperbarui", {
+          description: error.message,
+        });
       },
     });
 
@@ -116,7 +120,9 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
         toast.success("Pemasukan berhasil dihapus");
       },
       onError: (error) => {
-        toast.error(`Gagal menghapus Pemasukan: ${error.message}`);
+        toast.error("Pemasukan gagal dihapus", {
+          description: error.message,
+        });
       },
     });
 

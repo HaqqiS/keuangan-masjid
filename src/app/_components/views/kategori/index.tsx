@@ -102,6 +102,7 @@ export default function KategoriClientPage({
         await apiUtils.kategori.getKategori.invalidate();
         setKategoriToDelete(null);
         setDeleteKategoriDialogOpen(false);
+        editKategoriForm.reset();
         toast("Kategori deleted successfully");
       },
     });

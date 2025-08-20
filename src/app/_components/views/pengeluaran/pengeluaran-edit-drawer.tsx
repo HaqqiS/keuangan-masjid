@@ -11,23 +11,23 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import type { PengajuanFormSchema } from "@/types/pengajuan.type";
+import type { EditPengeluaranFormSchema } from "@/types/pengeluaran.type";
+import PengeluaranEditForm from "./pengeluaran-edit-form";
 import { Form } from "@/components/ui/form";
 import { type useForm } from "react-hook-form";
-import PengajuanForm from "./pengajuan-form";
 
-export function PengajuanEditDrawer({
+export function PengeluaranEditDrawer({
   isOpen,
   setIsOpen,
   form,
-  handleSubmitEditPengajuan,
+  handleSubmitEditPengeluaran,
   isPending,
   // children,
 }: {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  form: ReturnType<typeof useForm<PengajuanFormSchema>>;
-  handleSubmitEditPengajuan: (data: PengajuanFormSchema) => void;
+  form: ReturnType<typeof useForm<EditPengeluaranFormSchema>>;
+  handleSubmitEditPengeluaran: (data: EditPengeluaranFormSchema) => void;
   isPending: boolean;
   // children?: ReactNode;
 }) {
@@ -41,19 +41,19 @@ export function PengajuanEditDrawer({
     >
       <DrawerContent>
         <DrawerHeader className="gap-1">
-          <DrawerTitle>Detail Pengajuan</DrawerTitle>
-          <DrawerDescription>menampilkan rincian pengajuan</DrawerDescription>
+          <DrawerTitle>Detail Pengeluaran</DrawerTitle>
+          <DrawerDescription>menampilkan rincian pengeluaran</DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
           <Form {...form}>
-            <PengajuanForm onSubmit={handleSubmitEditPengajuan} />
+            <PengeluaranEditForm onSubmit={handleSubmitEditPengeluaran} />
           </Form>
           {/* {children} */}
         </div>
         <DrawerFooter>
           <Button
             type="submit"
-            onClick={form.handleSubmit(handleSubmitEditPengajuan)}
+            onClick={form.handleSubmit(handleSubmitEditPengeluaran)}
             disabled={isPending}
           >
             Submit

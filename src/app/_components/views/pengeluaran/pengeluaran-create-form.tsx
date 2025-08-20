@@ -15,19 +15,21 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
-import type { PemasukanFormSchema } from "@/types/pemasukan.types";
+import type { PengeluaranFormSchema } from "@/types/pengeluaran.type";
 import { TypeKategori } from "@prisma/client";
 import { useFormContext } from "react-hook-form";
 
-type PemasukanFormProps = {
-  onSubmit: (data: PemasukanFormSchema) => void;
+type PengeluaranCreateFormProps = {
+  onSubmit: (data: PengeluaranFormSchema) => void;
 };
 
-export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
-  const form = useFormContext<PemasukanFormSchema>();
+export default function PengeluaranCreateForm({
+  onSubmit,
+}: PengeluaranCreateFormProps) {
+  const form = useFormContext<PengeluaranFormSchema>();
 
   const { data: kategoris } = api.kategori.getKategori.useQuery({
-    type: TypeKategori.PEMASUKAN,
+    type: TypeKategori.PENGELUARAN,
   });
 
   return (
@@ -39,7 +41,7 @@ export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nama Pemasukan</FormLabel>
+                <FormLabel>Nama Pengeluaran</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Infaq Jumat Pertama"
@@ -79,7 +81,7 @@ export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
             name="kategoriId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Kategori Pemasukan</FormLabel>
+                <FormLabel>Kategori Pengeluaran</FormLabel>
                 <FormControl>
                   <Select
                     value={field.value}
