@@ -15,7 +15,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toRupiah } from "@/utils/toRupiah";
-import type { PemasukanType } from "@/types/pemasukan.types";
+import type {
+  PengeluaranType,
+  PengeluaranTypeRouter,
+} from "@/types/pengeluaran.type";
 import { dateFormatter } from "@/utils/dateFormatter";
 
 // Create a separate component for the drag handle
@@ -38,15 +41,13 @@ function DragHandle({ id }: { id: string }) {
   );
 }
 
-// export const columns: ColumnDef<z.infer<typeof schema>>[] = [
-// export const columns: ColumnDef<PemasukanType>[] = [
 export const columns = ({
   onEditClick,
   onDeleteClick,
 }: {
-  onEditClick: (item: PemasukanType) => void;
-  onDeleteClick: (pemasukanId: string, pemasukanName: string) => void;
-}): ColumnDef<PemasukanType>[] => [
+  onEditClick: (item: PengeluaranTypeRouter) => void;
+  onDeleteClick: (pengeluaranId: string, pengeluaranName: string) => void;
+}): ColumnDef<PengeluaranTypeRouter>[] => [
   {
     id: "drag",
     header: () => null,
@@ -64,23 +65,9 @@ export const columns = ({
       );
     },
   },
-  // {
-  //   accessorKey: "name",
-  //   header: "Name",
-  //   cell: ({ row }) => {
-  //     return (
-  //       <TableCellViewer
-  //         item={row.original}
-  //         editFormPemasukanOpen={editFormPemasukanOpen}
-  //         setEditFormPemasukanOpen={setEditFormPemasukanOpen}
-  //       />
-  //     );
-  //   },
-  //   enableHiding: false,
-  // },
   {
     accessorKey: "name",
-    header: "Name",
+    header: "Name Pengeluaran",
     cell: ({ row }) => (
       <Button
         variant="link"
@@ -124,6 +111,28 @@ export const columns = ({
 
     cell: ({ row }) => {
       return row.original.keterangan;
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Status Pengajuan",
+    cell: ({ row }) => (
+      <>
+        {row.original.pengajuan?.status ?? (
+          <span className="text-muted-foreground">Tidak ada</span>
+        )}
+      </>
+    ),
+  },
+  {
+    accessorKey: "pengajuan",
+    header: "Diajukan Oleh",
+    cell: ({ row }) => {
+      return (
+        row.original.pengajuan?.diajukanOleh.name ?? (
+          <span className="text-muted-foreground">Tidak ada</span>
+        )
+      );
     },
   },
   {

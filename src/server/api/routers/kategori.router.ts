@@ -55,7 +55,7 @@ export const kategoriRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const { db } = ctx;
 
-      const result = await db.kategori.create({
+      const newKategori = await db.kategori.create({
         data: {
           name: input.name,
           type: input.type,
@@ -63,7 +63,7 @@ export const kategoriRouter = createTRPCRouter({
           createdById: ctx.session.user.id,
         },
       });
-      return result;
+      return newKategori;
     }),
 
   deleteKategori: protectedProcedure

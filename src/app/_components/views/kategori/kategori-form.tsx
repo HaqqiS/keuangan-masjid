@@ -35,7 +35,12 @@ export default function KategoriForm({ onSubmit }: KategoriFormProps) {
               <FormItem>
                 <FormLabel>Nama Kategori</FormLabel>
                 <FormControl>
-                  <Input placeholder="Sedekah Jumat" {...field} required />
+                  <Input
+                    placeholder="Sedekah Jumat"
+                    {...field}
+                    autoFocus
+                    required
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toRupiah } from "@/utils/toRupiah";
-import type { PemasukanType } from "@/types/pemasukan.types";
+import type { PengajuanTypeRouter } from "@/types/pengajuan.type";
 import { dateFormatter } from "@/utils/dateFormatter";
 
 // Create a separate component for the drag handle
@@ -38,15 +38,13 @@ function DragHandle({ id }: { id: string }) {
   );
 }
 
-// export const columns: ColumnDef<z.infer<typeof schema>>[] = [
-// export const columns: ColumnDef<PemasukanType>[] = [
 export const columns = ({
   onEditClick,
   onDeleteClick,
 }: {
-  onEditClick: (item: PemasukanType) => void;
-  onDeleteClick: (pemasukanId: string, pemasukanName: string) => void;
-}): ColumnDef<PemasukanType>[] => [
+  onEditClick: (item: PengajuanTypeRouter) => void;
+  onDeleteClick: (pengajuanId: string, pengajuanJudul: string) => void;
+}): ColumnDef<PengajuanTypeRouter>[] => [
   {
     id: "drag",
     header: () => null,
@@ -64,30 +62,16 @@ export const columns = ({
       );
     },
   },
-  // {
-  //   accessorKey: "name",
-  //   header: "Name",
-  //   cell: ({ row }) => {
-  //     return (
-  //       <TableCellViewer
-  //         item={row.original}
-  //         editFormPemasukanOpen={editFormPemasukanOpen}
-  //         setEditFormPemasukanOpen={setEditFormPemasukanOpen}
-  //       />
-  //     );
-  //   },
-  //   enableHiding: false,
-  // },
   {
-    accessorKey: "name",
-    header: "Name",
+    accessorKey: "judul",
+    header: "Judul Pengajuan ",
     cell: ({ row }) => (
       <Button
         variant="link"
         className="text-foreground w-fit px-0 text-left text-base"
         onClick={() => onEditClick(row.original)}
       >
-        {row.original.name}
+        {row.original.judul}
       </Button>
     ),
     enableHiding: false,
@@ -112,10 +96,10 @@ export const columns = ({
     ),
   },
   {
-    accessorKey: "dibuat oleh",
-    header: "Dibuat oleh",
+    accessorKey: "diajukan oleh",
+    header: "Diajukan oleh",
     cell: ({ row }) => {
-      return row.original.createdBy.name;
+      return row.original.diajukanOleh.name;
     },
   },
   {
@@ -126,6 +110,18 @@ export const columns = ({
       return row.original.keterangan;
     },
   },
+  {
+    accessorKey: "status",
+    header: "Status Pengajuan",
+    cell: ({ row }) => (
+      <div className="w-32">
+        <Badge variant="outline" className="text-muted-foreground px-2 text-sm">
+          {row.original.status}
+        </Badge>
+      </div>
+    ),
+  },
+
   {
     accessorKey: "dibuat pada",
     header: "Dibuat pada",
@@ -160,7 +156,7 @@ export const columns = ({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               variant="destructive"
-              onClick={() => onDeleteClick(row.original.id, row.original.name)}
+              onClick={() => onDeleteClick(row.original.id, row.original.judul)}
             >
               Delete
             </DropdownMenuItem>

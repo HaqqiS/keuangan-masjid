@@ -26,7 +26,10 @@ export const pemasukanFormSchema = z.object({
   jumlah: z.coerce.number().min(1, {
     message: "Jumlah pemasukan tidak boleh kosong",
   }),
-  keterangan: z.string().optional(),
+  keterangan: z
+    .string()
+    .max(255, { message: "Keterangan tidak boleh lebih dari 255 karakter" })
+    .optional(),
   kategoriId: z.string().uuid(),
 });
 

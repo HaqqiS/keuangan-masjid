@@ -72,6 +72,7 @@ model User {
     Post         Post[]
     Pemasukans   Pemasukan[]
     Pengeluarans Pengeluaran[]
+    Pengajuan    Pengajuan[]
 }
 
 model VerificationToken {
@@ -99,6 +100,7 @@ model Kategori {
     createdById String
 
     Pemasukans   Pemasukan[]
+    Pengajuans   Pengajuan[]
     Pengeluarans Pengeluaran[]
 
     @@index([name, type])
@@ -120,18 +122,47 @@ model Pemasukan {
     createdById String
 }
 
+enum StatusPengajuan {
+    PENDING
+    APPROVED
+    REJECTED
+}
+
 model Pengeluaran {
     id         String  @id @default(uuid())
     name       String
     keterangan String?
     jumlah     Decimal
 
+    pengajuanId String?    @unique
+    pengajuan   Pengajuan? @relation(fields: [pengajuanId], references: [id])
+
+    createdBy   User   @relation(fields: [createdById], references: [id])
+    createdById String
+
     kategori   Kategori @relation(fields: [kategoriId], references: [id])
     kategoriId String
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+}
 
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
+model Pengajuan {
+    id         String  @id @default(uuid())
+    judul      String
+    keterangan String?
+    jumlah     Decimal
+
+    status StatusPengajuan @default(PENDING)
+
+    kategori   Kategori @relation(fields: [kategoriId], references: [id])
+    kategoriId String
+
+    diajukanOleh   User   @relation(fields: [diajukanOlehId], references: [id])
+    diajukanOlehId String
+
+    Pengeluaran Pengeluaran?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }

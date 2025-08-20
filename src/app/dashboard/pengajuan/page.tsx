@@ -1,7 +1,11 @@
-export default function PengajuanPage() {
+import PengajuanPageView from "@/app/_components/views/pengajuan";
+import { api } from "@/trpc/server";
+
+export default async function PengajuanPage() {
+  const dataPengajuan = await api.pengajuan.getPengajuan();
   return (
-    <div>
-      <h1>PengajuanPage</h1>
-    </div>
+    <>
+      <PengajuanPageView initialData={dataPengajuan} />
+    </>
   );
 }

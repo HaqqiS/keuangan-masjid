@@ -1,7 +1,12 @@
-export default function PengeluaranPage() {
+import PengeluaranPageView from "@/app/_components/views/pengeluaran";
+import { api } from "@/trpc/server";
+
+export default async function PengeluaranPage() {
+  const dataPengeluaran = await api.pengeluaran.getPengeluaran();
+
   return (
-    <div>
-      <h1>PengeluaranPage</h1>
-    </div>
+    <>
+      <PengeluaranPageView initialData={dataPengeluaran} />
+    </>
   );
 }

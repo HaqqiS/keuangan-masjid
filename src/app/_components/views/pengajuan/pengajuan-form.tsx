@@ -15,19 +15,19 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
-import type { PemasukanFormSchema } from "@/types/pemasukan.types";
+import type { CreatePengajuanFormSchema } from "@/types/pengajuan.type";
 import { TypeKategori } from "@prisma/client";
 import { useFormContext } from "react-hook-form";
 
-type PemasukanFormProps = {
-  onSubmit: (data: PemasukanFormSchema) => void;
+type PengajuanFormProps = {
+  onSubmit: (data: CreatePengajuanFormSchema) => void;
 };
 
-export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
-  const form = useFormContext<PemasukanFormSchema>();
+export default function PengajuanForm({ onSubmit }: PengajuanFormProps) {
+  const form = useFormContext<CreatePengajuanFormSchema>();
 
   const { data: kategoris } = api.kategori.getKategori.useQuery({
-    type: TypeKategori.PEMASUKAN,
+    type: TypeKategori.PENGELUARAN,
   });
 
   return (
@@ -36,17 +36,32 @@ export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
         <div className="grid gap-3">
           <FormField
             control={form.control}
-            name="name"
+            name="judul"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nama Pemasukan</FormLabel>
+                <FormLabel>Judul Pengajuan</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Infaq Jumat Pertama"
+                    placeholder="Pengajuan Bantuan Renovasi Masjid"
                     {...field}
                     required
                     autoFocus
                   />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="grid gap-3">
+          <FormField
+            control={form.control}
+            name="keterangan"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Keterangan</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Masukkan keterangan" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -78,7 +93,7 @@ export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
             name="kategoriId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Tipe Kategori</FormLabel>
+                <FormLabel>Kategori Pengeluaran</FormLabel>
                 <FormControl>
                   <Select
                     value={field.value}
@@ -95,21 +110,6 @@ export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
                       ))}
                     </SelectContent>
                   </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="grid gap-3">
-          <FormField
-            control={form.control}
-            name="keterangan"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Keterangan</FormLabel>
-                <FormControl>
-                  <Textarea placeholder="Masukkan keterangan" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

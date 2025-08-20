@@ -53,7 +53,7 @@ export const pemasukanRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { db } = ctx;
 
-      const result = await db.pemasukan.create({
+      const newPemasukan = await db.pemasukan.create({
         data: {
           name: input.name,
           keterangan: input.keterangan,
@@ -64,7 +64,7 @@ export const pemasukanRouter = createTRPCRouter({
         },
       });
 
-      return result;
+      return newPemasukan;
     }),
 
   deletePemasukan: protectedProcedure

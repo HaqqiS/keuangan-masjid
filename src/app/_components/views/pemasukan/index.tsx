@@ -32,12 +32,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTrigger,
+  AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
 import PemasukanForm from "./pemasukan-form";
 import { useForm } from "react-hook-form";
 import { api } from "@/trpc/react";
-import { PemasukanEditDrawer } from "./pamasukan-edit-drawer";
+import { PemasukanEditDrawer } from "./pemasukan-edit-drawer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
@@ -52,6 +53,12 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
   const [editFormPemasukanOpen, setEditFormPemasukanOpen] = useState(false);
   const [selectedPemasukanToEdit, setSelectedPemasukanToEdit] =
     useState<PemasukanType | null>(null);
+  const [deletePemasukanDialogOpen, setDeletePemasukanDialogOpen] =
+    useState(false);
+  const [selectedPemasukanToDelete, setSelectedPemasukanToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   // FORM HANDLING
   const createPemasukanForm = useForm<PemasukanFormSchema>({
@@ -74,7 +81,7 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
     { initialData: initialData },
   );
 
-  console.log("Pemasukan Data:", pemasukanData);
+  console.log("pemasukanData", pemasukanData);
 
   const { mutate: createPemasukan, isPending: isPendingCreate } =
     api.pemasukan.createPemasukan.useMutation({
@@ -102,6 +109,19 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
       },
     });
 
+  const { mutate: deletePemasukan, isPending: isPendingDelete } =
+    api.pemasukan.deletePemasukan.useMutation({
+      onSuccess: async () => {
+        await apiUtils.pemasukan.getPemasukan.invalidate();
+        setDeletePemasukanDialogOpen(false);
+        setSelectedPemasukanToDelete(null);
+        toast.success("Pemasukan berhasil dihapus");
+      },
+      onError: (error) => {
+        toast.error(`Gagal menghapus Pemasukan: ${error.message}`);
+      },
+    });
+
   // HANDLERS
   const handleSubmitCreatePemasukan = (data: PemasukanFormSchema) => {
     createPemasukan({
@@ -112,7 +132,7 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
     });
   };
 
-  const handleOpenDrawer = (item: PemasukanType) => {
+  const handleClickEditPemasukan = (item: PemasukanType) => {
     setSelectedPemasukanToEdit(item); // Simpan data item yang di-klik
     setEditFormPemasukanOpen(true); // Buka drawer-nya
 
@@ -131,17 +151,26 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
     updatePemasukan({ id: selectedPemasukanToEdit.id, ...data });
   };
 
-  const columns = createColumns({ onEditClick: handleOpenDrawer });
-
-  const handleClickDeletePemasukan = (pemasukanId: string) => {
-    console.log(pemasukanId);
+  const handleClickDeletePemasukan = (
+    pemasukanId: string,
+    pemasukanName: string,
+  ) => {
+    setSelectedPemasukanToDelete({ id: pemasukanId, name: pemasukanName });
+    setDeletePemasukanDialogOpen(true);
   };
   const handleSubmitDeletePemasukan = () => {
-    console.log("Delete Pemasukan");
+    if (!selectedPemasukanToDelete) return;
+    deletePemasukan({ pemasukanId: selectedPemasukanToDelete.id });
   };
+
+  const columns = createColumns({
+    onEditClick: handleClickEditPemasukan,
+    onDeleteClick: handleClickDeletePemasukan,
+  });
 
   return (
     <>
+      {/* EDIT DRAWER */}
       {selectedPemasukanToEdit && (
         <PemasukanEditDrawer
           isOpen={editFormPemasukanOpen}
@@ -151,6 +180,35 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
           isPending={isPendingUpdate}
         />
       )}
+
+      {/* DELETE DIALOG */}
+      <AlertDialog
+        open={deletePemasukanDialogOpen}
+        onOpenChange={setDeletePemasukanDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Pemasukan</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Yakin ingin menghapus pemasukan{" "}
+            <span className="text-accent-foreground font-bold">
+              {selectedPemasukanToDelete?.name}{" "}
+            </span>
+            ini? Tindakan ini tidak dapat dibatalkan.
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleSubmitDeletePemasukan}
+              disabled={isPendingDelete}
+            >
+              Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="px-4 lg:px-6">
         <DashboardHeader>

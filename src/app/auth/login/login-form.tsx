@@ -68,7 +68,12 @@ export default function LoginForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ahmad@mail.com" {...field} required />
+                    <Input
+                      placeholder="Ahmad@mail.com"
+                      {...field}
+                      autoFocus
+                      required
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
