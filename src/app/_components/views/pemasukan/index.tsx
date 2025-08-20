@@ -81,8 +81,6 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
     { initialData: initialData },
   );
 
-  console.log("pemasukanData", pemasukanData);
-
   const { mutate: createPemasukan, isPending: isPendingCreate } =
     api.pemasukan.createPemasukan.useMutation({
       onSuccess: async () => {
@@ -132,15 +130,15 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
     });
   };
 
-  const handleClickEditPemasukan = (item: PemasukanType) => {
-    setSelectedPemasukanToEdit(item); // Simpan data item yang di-klik
+  const handleClickEditPemasukan = (pemasukan: PemasukanType) => {
+    setSelectedPemasukanToEdit(pemasukan); // Simpan data pemasukan yang di-klik
     setEditFormPemasukanOpen(true); // Buka drawer-nya
 
     editPemasukanForm.reset({
-      name: item.name,
-      jumlah: item.jumlah,
-      keterangan: item.keterangan ?? "",
-      kategoriId: item.kategori.id,
+      name: pemasukan.name,
+      jumlah: pemasukan.jumlah,
+      keterangan: pemasukan.keterangan ?? "",
+      kategoriId: pemasukan.kategori.id,
     });
   };
 

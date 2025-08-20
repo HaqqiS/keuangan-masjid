@@ -1,7 +1,7 @@
 "use client";
 import {
-  createPengajuanFormSchema,
-  type CreatePengajuanFormSchema,
+  pengajuanFormSchema,
+  type PengajuanFormSchema,
   type PengajuanTypeRouter,
 } from "@/types/pengajuan.type";
 import {
@@ -39,6 +39,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import PengajuanForm from "./pengajuan-form";
 import { toast } from "sonner";
 import { useState } from "react";
+import { PengajuanEditDrawer } from "./pengajuna-edit-drawer";
 
 interface PengajuanPageViewProps {
   initialData: PengajuanTypeRouter[];
@@ -57,10 +58,13 @@ export default function PengajuanPageView({
     pengajuanId: string;
     pengajuanJudul: string;
   } | null>(null);
+  const [editFormPengajuanOpen, setEditFormPengajuanOpen] = useState(false);
+  const [selectedPengajuanToEdit, setSelectedPengajuanToEdit] =
+    useState<PengajuanTypeRouter | null>(null);
 
   // HOOK FORMS
-  const createPengajuanForm = useForm<CreatePengajuanFormSchema>({
-    resolver: zodResolver(createPengajuanFormSchema),
+  const createPengajuanForm = useForm<PengajuanFormSchema>({
+    resolver: zodResolver(pengajuanFormSchema),
     defaultValues: {
       judul: "",
       keterangan: "",
@@ -69,11 +73,15 @@ export default function PengajuanPageView({
     },
   });
 
+  const editPengajuanForm = useForm<PengajuanFormSchema>({
+    resolver: zodResolver(pengajuanFormSchema),
+  });
+
   // QUERIES MUTATIONS
-  const { data: dataPengajuan, isLoading: isLoadingPengajuan } =
-    api.pengajuan.getPengajuan.useQuery(undefined, {
-      initialData: initialData,
-    });
+  const { data: dataPengajuan } = api.pengajuan.getPengajuan.useQuery(
+    undefined,
+    { initialData: initialData },
+  );
 
   const { mutate: createPengajuan, isPending: isPendingCreate } =
     api.pengajuan.createPengajuan.useMutation({
@@ -82,6 +90,19 @@ export default function PengajuanPageView({
         setCreateFormPengajuanOpen(false);
         createPengajuanForm.reset();
         toast.success("Pengajuan berhasil dibuat");
+      },
+      onError: (error) => {
+        toast.error("Pengajuan gagal dibuat", { description: error.message });
+      },
+    });
+
+  const { mutate: updatePengajuan, isPending: isPendingUpdate } =
+    api.pengajuan.updatePengajuan.useMutation({
+      onSuccess: async () => {
+        await apiUtils.pengajuan.getPengajuan.invalidate();
+        toast.success("Pengajuan berhasil diperbarui");
+        setSelectedPengajuanToEdit(null);
+        setEditFormPengajuanOpen(false);
       },
     });
 
@@ -96,12 +117,29 @@ export default function PengajuanPageView({
     });
 
   // HANDLERS
-  const handleSubmitCreatePengajuan = (data: CreatePengajuanFormSchema) => {
+  const handleSubmitCreatePengajuan = (data: PengajuanFormSchema) => {
     createPengajuan(data);
   };
 
-  const handleClickEditPengajuan = () => {
-    console.log("Edit");
+  const handleClickEditPengajuan = (pengajuan: PengajuanTypeRouter) => {
+    setEditFormPengajuanOpen(true);
+    setSelectedPengajuanToEdit(pengajuan);
+
+    editPengajuanForm.reset({
+      judul: pengajuan.judul,
+      keterangan: pengajuan.keterangan ?? "",
+      jumlah: pengajuan.jumlah,
+      kategoriId: pengajuan.kategori.id,
+    });
+  };
+
+  const handleSubmitEditPengajuan = (data: PengajuanFormSchema) => {
+    if (!selectedPengajuanToEdit) return;
+    console.table(data);
+    updatePengajuan({
+      id: selectedPengajuanToEdit.id,
+      ...data,
+    });
   };
 
   const handleClickDeletePengajuan = (
@@ -124,6 +162,17 @@ export default function PengajuanPageView({
 
   return (
     <>
+      {/* EDIT DRAWER */}
+      {selectedPengajuanToEdit && (
+        <PengajuanEditDrawer
+          isOpen={editFormPengajuanOpen}
+          setIsOpen={setEditFormPengajuanOpen}
+          form={editPengajuanForm}
+          handleSubmitEditPengajuan={handleSubmitEditPengajuan}
+          isPending={isPendingUpdate}
+        />
+      )}
+
       {/* DELETE DIALOG */}
       <AlertDialog
         open={deletePengajuanDialogOpen}
@@ -188,7 +237,7 @@ export default function PengajuanPageView({
                       onClick={createPengajuanForm.handleSubmit(
                         handleSubmitCreatePengajuan,
                       )}
-                      // disabled={isPendingCreate}
+                      disabled={isPendingCreate}
                     >
                       Buat Pengajuan
                     </Button>

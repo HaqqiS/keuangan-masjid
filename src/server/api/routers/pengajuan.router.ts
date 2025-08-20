@@ -1,4 +1,4 @@
-import { createPengajuanFormSchema } from "@/types/pengajuan.type";
+import { pengajuanFormSchema } from "@/types/pengajuan.type";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { StatusPengajuan } from "@prisma/client";
 import z from "zod";
@@ -34,7 +34,7 @@ export const pengajuanRouter = createTRPCRouter({
   }),
 
   createPengajuan: protectedProcedure
-    .input(createPengajuanFormSchema)
+    .input(pengajuanFormSchema)
     .mutation(async ({ ctx, input }) => {
       const { db } = ctx;
       const result = await db.pengajuan.create({
@@ -43,6 +43,20 @@ export const pengajuanRouter = createTRPCRouter({
           status: StatusPengajuan.PENDING,
           // diajukanOleh: { connect: { id: ctx.session.user.id } },
           diajukanOlehId: ctx.session.user.id,
+        },
+      });
+
+      return result;
+    }),
+
+  updatePengajuan: protectedProcedure
+    .input(pengajuanFormSchema.extend({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { db } = ctx;
+      const result = await db.pengajuan.update({
+        where: { id: input.id },
+        data: {
+          ...input,
         },
       });
 
@@ -58,7 +72,7 @@ export const pengajuanRouter = createTRPCRouter({
         where: { id: input.pengajuanId },
       });
 
-      console.log("Pengajuan deleted:", result);
+      // console.log("Pengajuan deleted:", result);
       return result;
     }),
 });

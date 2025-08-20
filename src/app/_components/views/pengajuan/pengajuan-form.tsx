@@ -15,16 +15,16 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
-import type { CreatePengajuanFormSchema } from "@/types/pengajuan.type";
+import type { PengajuanFormSchema } from "@/types/pengajuan.type";
 import { TypeKategori } from "@prisma/client";
 import { useFormContext } from "react-hook-form";
 
 type PengajuanFormProps = {
-  onSubmit: (data: CreatePengajuanFormSchema) => void;
+  onSubmit: (data: PengajuanFormSchema) => void;
 };
 
 export default function PengajuanForm({ onSubmit }: PengajuanFormProps) {
-  const form = useFormContext<CreatePengajuanFormSchema>();
+  const form = useFormContext<PengajuanFormSchema>();
 
   const { data: kategoris } = api.kategori.getKategori.useQuery({
     type: TypeKategori.PENGELUARAN,

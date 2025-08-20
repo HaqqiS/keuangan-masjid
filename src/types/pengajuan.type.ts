@@ -11,7 +11,7 @@ type RouterOutputs = inferRouterOutputs<AppRouter>;
 export type PengajuanTypeRouter =
   RouterOutputs["pengajuan"]["getPengajuan"][number];
 
-export const createPengajuanFormSchema = z.object({
+export const pengajuanFormSchema = z.object({
   judul: z.string().min(1, { message: "Judul tidak boleh kosong" }),
   keterangan: z.string().max(255).optional(),
   jumlah: z.coerce
@@ -30,11 +30,11 @@ export const createPengajuanFormSchema = z.object({
   kategoriId: z.string().uuid(),
 });
 
-export const editPengajuanFormSchema = createPengajuanFormSchema.extend({
+export const editStatusPengajuanFormSchema = pengajuanFormSchema.extend({
   status: z.nativeEnum(StatusPengajuan),
 });
 
-export type CreatePengajuanFormSchema = z.infer<
-  typeof createPengajuanFormSchema
+export type PengajuanFormSchema = z.infer<typeof pengajuanFormSchema>;
+export type EditStatusPengajuanFormSchema = z.infer<
+  typeof editStatusPengajuanFormSchema
 >;
-export type EditPengajuanFormSchema = z.infer<typeof editPengajuanFormSchema>;
