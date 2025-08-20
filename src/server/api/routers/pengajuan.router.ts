@@ -75,4 +75,23 @@ export const pengajuanRouter = createTRPCRouter({
       // console.log("Pengajuan deleted:", result);
       return result;
     }),
+
+  // NANTI GANTI DENGAN PROCEDURE YANG SESUAI ROLE
+  updateStatusPengajuan: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        status: z.nativeEnum(StatusPengajuan, { message: "Invalid status" }),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { db } = ctx;
+
+      const result = await db.pengajuan.update({
+        where: { id: input.id },
+        data: { status: input.status },
+      });
+
+      return result;
+    }),
 });

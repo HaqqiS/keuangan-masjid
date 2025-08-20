@@ -96,8 +96,11 @@ export const columns = ({
     accessorKey: "kategori",
     header: "Kategori",
     cell: ({ row }) => (
-      <div className="w-32">
-        <Badge variant="outline" className="text-muted-foreground px-2 text-sm">
+      <div className="w-24 lg:w-32">
+        <Badge
+          variant="outline"
+          className="text-muted-foreground h-auto px-2 text-center text-sm break-words whitespace-normal lg:truncate lg:whitespace-nowrap"
+        >
           {row.original.kategori.name}
         </Badge>
       </div>

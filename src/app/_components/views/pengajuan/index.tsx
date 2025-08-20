@@ -40,6 +40,7 @@ import PengajuanForm from "./pengajuan-form";
 import { toast } from "sonner";
 import { useState } from "react";
 import { PengajuanEditDrawer } from "./pengajuna-edit-drawer";
+import type { StatusPengajuan } from "@prisma/client";
 
 interface PengajuanPageViewProps {
   initialData: PengajuanTypeRouter[];
@@ -117,6 +118,19 @@ export default function PengajuanPageView({
       },
     });
 
+  const { mutate: updateStatusPengajuan, isPending: isPendingUpdateStatus } =
+    api.pengajuan.updateStatusPengajuan.useMutation({
+      onSuccess: async () => {
+        await apiUtils.pengajuan.getPengajuan.invalidate();
+        toast.success("Status pengajuan berhasil diperbarui");
+      },
+      onError: (error) => {
+        toast.error("Status pengajuan gagal diperbarui", {
+          description: error.message,
+        });
+      },
+    });
+
   // HANDLERS
   const handleSubmitCreatePengajuan = (data: PengajuanFormSchema) => {
     createPengajuan(data);
@@ -156,9 +170,15 @@ export default function PengajuanPageView({
     deletePengajuan({ pengajuanId: selectedPengajuanToDelete.pengajuanId });
   };
 
+  const handleStatusChange = (pengajuanId: string, status: StatusPengajuan) => {
+    updateStatusPengajuan({ id: pengajuanId, status });
+  };
+
   const columns = createColumns({
     onEditClick: handleClickEditPengajuan,
     onDeleteClick: handleClickDeletePengajuan,
+    onStatusChange: handleStatusChange,
+    isPendingStatusChange: isPendingUpdateStatus,
   });
 
   return (
@@ -254,7 +274,7 @@ export default function PengajuanPageView({
                 onOpenChange={setCreateFormPengajuanOpen}
               >
                 <AlertDialogTrigger asChild>
-                  <Button>Tambah Pemasukan</Button>
+                  <Button>Tambah Pengajuan</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>

@@ -17,6 +17,15 @@ import {
 import { toRupiah } from "@/utils/toRupiah";
 import type { PengajuanTypeRouter } from "@/types/pengajuan.type";
 import { dateFormatter } from "@/utils/dateFormatter";
+import { StatusPengajuan } from "@prisma/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 // Create a separate component for the drag handle
 function DragHandle({ id }: { id: string }) {
@@ -41,9 +50,13 @@ function DragHandle({ id }: { id: string }) {
 export const columns = ({
   onEditClick,
   onDeleteClick,
+  onStatusChange,
+  isPendingStatusChange,
 }: {
   onEditClick: (item: PengajuanTypeRouter) => void;
   onDeleteClick: (pengajuanId: string, pengajuanJudul: string) => void;
+  onStatusChange: (pengajuanId: string, status: StatusPengajuan) => void;
+  isPendingStatusChange: boolean;
 }): ColumnDef<PengajuanTypeRouter>[] => [
   {
     id: "drag",
@@ -64,7 +77,7 @@ export const columns = ({
   },
   {
     accessorKey: "judul",
-    header: "Judul Pengajuan ",
+    header: "Judul Pengajuan",
     cell: ({ row }) => (
       <Button
         variant="link"
@@ -76,16 +89,44 @@ export const columns = ({
     ),
     enableHiding: false,
   },
+  // {
+  //   accessorKey: "kategori",
+  //   header: "Kategori",
+  //   cell: ({ row }) => {
+  //     return (
+  //       <div className="w-32">
+  //         <Badge
+  //           variant="outline"
+  //           className="text-muted-foreground px-2 text-center text-sm break-words whitespace-pre-line"
+  //           style={{
+  //             whiteSpace: "pre-line",
+  //             wordBreak: "break-word",
+  //             lineHeight: "1.2",
+  //             // Responsive: allow wrapping on mobile
+  //             maxWidth: "100%",
+  //           }}
+  //         >
+  //           {row.original.kategori.name}
+  //         </Badge>
+  //       </div>
+  //     );
+  //   },
+  // },
   {
     accessorKey: "kategori",
     header: "Kategori",
-    cell: ({ row }) => (
-      <div className="w-32">
-        <Badge variant="outline" className="text-muted-foreground px-2 text-sm">
-          {row.original.kategori.name}
-        </Badge>
-      </div>
-    ),
+    cell: ({ row }) => {
+      return (
+        <div className="w-24 lg:w-32">
+          <Badge
+            variant="outline"
+            className="text-muted-foreground h-auto px-2 text-center text-sm break-words whitespace-normal lg:truncate lg:whitespace-nowrap"
+          >
+            {row.original.kategori.name}
+          </Badge>
+        </div>
+      );
+    },
   },
 
   {
@@ -113,13 +154,68 @@ export const columns = ({
   {
     accessorKey: "status",
     header: "Status Pengajuan",
-    cell: ({ row }) => (
-      <div className="w-32">
-        <Badge variant="outline" className="text-muted-foreground px-2 text-sm">
-          {row.original.status}
-        </Badge>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const isPending = row.original.status === StatusPengajuan.PENDING;
+
+      if (isPending) {
+        return (
+          <>
+            <Label htmlFor={`${row.original.id}-reviewer`} className="sr-only">
+              Reviewer
+            </Label>
+            <Select
+              defaultValue={row.original.status}
+              disabled={isPendingStatusChange}
+              onValueChange={(value) => {
+                onStatusChange(row.original.id, value as StatusPengajuan);
+              }}
+            >
+              <SelectTrigger
+                className="w-38 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate"
+                size="sm"
+                id={`${row.original.id}-reviewer`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectItem
+                  value={StatusPengajuan.APPROVED}
+                  className="!bg-green-100 !text-green-700 data-[state=checked]:!bg-green-200"
+                >
+                  {StatusPengajuan.APPROVED}
+                </SelectItem>
+                <SelectItem value={StatusPengajuan.PENDING}>
+                  {StatusPengajuan.PENDING}
+                </SelectItem>
+                <SelectItem
+                  value={StatusPengajuan.REJECTED}
+                  className="!bg-red-100 !text-red-700 data-[state=checked]:!bg-red-200"
+                >
+                  {StatusPengajuan.REJECTED}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </>
+        );
+      }
+
+      return (
+        <div className="w-32">
+          <Badge
+            variant="outline"
+            className={`px-2 text-sm ${
+              row.original.status === StatusPengajuan.REJECTED
+                ? "border-red-200 bg-red-100 text-red-700"
+                : row.original.status === StatusPengajuan.APPROVED
+                  ? "border-green-200 bg-green-100 text-green-700"
+                  : "text-muted-foreground"
+            }`}
+          >
+            {row.original.status}
+          </Badge>
+        </div>
+      );
+    },
   },
 
   {
