@@ -8,12 +8,6 @@ import type { NextAuthRequest } from "node_modules/next-auth/lib";
 export default auth((req: NextAuthRequest) => {
   //  { session: { user: { ... } } }
   const session = req.auth;
-  // console.log(
-  //   "session in middleware",
-  //   req.auth,
-  //   "expires at: ",
-  //   session?.expires,
-  // );
   const pathname = req.nextUrl.pathname;
 
   // console.log("Middleware pathname:", pathname);
@@ -30,12 +24,25 @@ export default auth((req: NextAuthRequest) => {
     if (pathname === "/auth/login") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
-    // if (
-    //   pathname.startsWith("/dashboard") &&
-    //   session.user.role !== UserRole.KETUA
-    // ) {
-    //   return NextResponse.redirect(new URL("/", req.url));
-    // }
+    if (
+      pathname.endsWith("/dashboard") &&
+      (session.user.role === UserRole.KETUA || UserRole.BENDAHARA)
+    ) {
+      return NextResponse.redirect(new URL("/dashboard/pengajuan", req.url));
+    }
+
+    if (
+      pathname.startsWith("/dashboard/pemasukan") &&
+      (session.user.role === UserRole.KETUA || UserRole.BENDAHARA)
+    ) {
+      return NextResponse.redirect(new URL("/dashboard/pengajuan", req.url));
+    }
+    if (
+      pathname.startsWith("/dashboard/pengeluaran") &&
+      (session.user.role === UserRole.KETUA || UserRole.BENDAHARA)
+    ) {
+      return NextResponse.redirect(new URL("/dashboard/pengajuan", req.url));
+    }
   }
 });
 

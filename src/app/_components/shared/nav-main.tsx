@@ -27,7 +27,7 @@ export function NavMain({
   }[];
 }) {
   const pathname = usePathname(); // 2. Dapatkan path saat ini
-  console.log("Current Path:", pathname);
+  // console.log("Current Path:", pathname);
 
   return (
     <SidebarGroup>

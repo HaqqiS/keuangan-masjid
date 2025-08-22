@@ -60,7 +60,7 @@ export default function DashboardLayoutView({
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+      <AppSidebar variant="inset" suppressHydrationWarning />
       <SidebarInset>
         <SiteHeader />
         <div className="flex flex-1 flex-col">

@@ -40,7 +40,8 @@ import PengajuanForm from "./pengajuan-form";
 import { toast } from "sonner";
 import { useState } from "react";
 import { PengajuanEditDrawer } from "./pengajuna-edit-drawer";
-import type { StatusPengajuan } from "@prisma/client";
+import { StatusPengajuan, UserRole } from "@prisma/client";
+import { useSession } from "next-auth/react";
 
 interface PengajuanPageViewProps {
   initialData: PengajuanTypeRouter[];
@@ -51,6 +52,10 @@ export default function PengajuanPageView({
 }: PengajuanPageViewProps) {
   const isMobile = useIsMobile();
   const apiUtils = api.useUtils();
+
+  const session = useSession();
+  const userRole = session.data?.user.role;
+  // console.log("Session:", session.data?.user);
 
   const [createFormPengajuanOpen, setCreateFormPengajuanOpen] = useState(false);
   const [deletePengajuanDialogOpen, setDeletePengajuanDialogOpen] =
@@ -120,9 +125,13 @@ export default function PengajuanPageView({
 
   const { mutate: updateStatusPengajuan, isPending: isPendingUpdateStatus } =
     api.pengajuan.updateStatusPengajuan.useMutation({
-      onSuccess: async () => {
+      onSuccess: async (result) => {
         await apiUtils.pengajuan.getPengajuan.invalidate();
         toast.success("Status pengajuan berhasil diperbarui");
+        if (result?.status === StatusPengajuan.APPROVED) {
+          await apiUtils.pengeluaran.getPengeluaran.invalidate();
+          toast.success("Pengeluaran berhasil ditambahkan");
+        }
       },
       onError: (error) => {
         toast.error("Status pengajuan gagal diperbarui", {
@@ -179,6 +188,7 @@ export default function PengajuanPageView({
     onDeleteClick: handleClickDeletePengajuan,
     onStatusChange: handleStatusChange,
     isPendingStatusChange: isPendingUpdateStatus,
+    role: userRole,
   });
 
   return (

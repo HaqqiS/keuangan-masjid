@@ -92,6 +92,19 @@ export const pengajuanRouter = createTRPCRouter({
         data: { status: input.status },
       });
 
+      if (result.status === StatusPengajuan.APPROVED) {
+        await db.pengeluaran.create({
+          data: {
+            name: result.judul,
+            jumlah: result.jumlah,
+            keterangan: result.keterangan,
+            pengajuanId: result.id,
+            kategoriId: result.kategoriId,
+            createdById: ctx.session.user.id,
+          },
+        });
+      }
+
       return result;
     }),
 });

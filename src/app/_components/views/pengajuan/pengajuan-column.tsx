@@ -17,7 +17,7 @@ import {
 import { toRupiah } from "@/utils/toRupiah";
 import type { PengajuanTypeRouter } from "@/types/pengajuan.type";
 import { dateFormatter } from "@/utils/dateFormatter";
-import { StatusPengajuan } from "@prisma/client";
+import { StatusPengajuan, UserRole } from "@prisma/client";
 import {
   Select,
   SelectContent,
@@ -52,11 +52,13 @@ export const columns = ({
   onDeleteClick,
   onStatusChange,
   isPendingStatusChange,
+  role,
 }: {
   onEditClick: (item: PengajuanTypeRouter) => void;
   onDeleteClick: (pengajuanId: string, pengajuanJudul: string) => void;
   onStatusChange: (pengajuanId: string, status: StatusPengajuan) => void;
   isPendingStatusChange: boolean;
+  role: UserRole | undefined;
 }): ColumnDef<PengajuanTypeRouter>[] => [
   {
     id: "drag",
@@ -89,29 +91,6 @@ export const columns = ({
     ),
     enableHiding: false,
   },
-  // {
-  //   accessorKey: "kategori",
-  //   header: "Kategori",
-  //   cell: ({ row }) => {
-  //     return (
-  //       <div className="w-32">
-  //         <Badge
-  //           variant="outline"
-  //           className="text-muted-foreground px-2 text-center text-sm break-words whitespace-pre-line"
-  //           style={{
-  //             whiteSpace: "pre-line",
-  //             wordBreak: "break-word",
-  //             lineHeight: "1.2",
-  //             // Responsive: allow wrapping on mobile
-  //             maxWidth: "100%",
-  //           }}
-  //         >
-  //           {row.original.kategori.name}
-  //         </Badge>
-  //       </div>
-  //     );
-  //   },
-  // },
   {
     accessorKey: "kategori",
     header: "Kategori",
@@ -157,7 +136,25 @@ export const columns = ({
     cell: ({ row }) => {
       const isPending = row.original.status === StatusPengajuan.PENDING;
 
-      if (isPending) {
+      if (role === (UserRole.KETUA || UserRole.BENDAHARA)) {
+        if (!isPending) {
+          return (
+            <div className="w-32">
+              <Badge
+                variant="outline"
+                className={`px-2 text-sm ${
+                  row.original.status === StatusPengajuan.REJECTED
+                    ? "border-red-200 bg-red-100 text-red-700"
+                    : row.original.status === StatusPengajuan.APPROVED
+                      ? "border-green-200 bg-green-100 text-green-700"
+                      : "text-muted-foreground"
+                }`}
+              >
+                {row.original.status}
+              </Badge>
+            </div>
+          );
+        }
         return (
           <>
             <Label htmlFor={`${row.original.id}-reviewer`} className="sr-only">
@@ -197,24 +194,24 @@ export const columns = ({
             </Select>
           </>
         );
+      } else {
+        return (
+          <div className="w-32">
+            <Badge
+              variant="outline"
+              className={`px-2 text-sm ${
+                row.original.status === StatusPengajuan.REJECTED
+                  ? "border-red-200 bg-red-100 text-red-700"
+                  : row.original.status === StatusPengajuan.APPROVED
+                    ? "border-green-200 bg-green-100 text-green-700"
+                    : "text-muted-foreground"
+              }`}
+            >
+              {row.original.status}
+            </Badge>
+          </div>
+        );
       }
-
-      return (
-        <div className="w-32">
-          <Badge
-            variant="outline"
-            className={`px-2 text-sm ${
-              row.original.status === StatusPengajuan.REJECTED
-                ? "border-red-200 bg-red-100 text-red-700"
-                : row.original.status === StatusPengajuan.APPROVED
-                  ? "border-green-200 bg-green-100 text-green-700"
-                  : "text-muted-foreground"
-            }`}
-          >
-            {row.original.status}
-          </Badge>
-        </div>
-      );
     },
   },
 

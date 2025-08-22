@@ -1,7 +1,7 @@
 import { compare } from "bcryptjs";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
+// import DiscordProvider from "next-auth/providers/discord";
 import Credentials from "next-auth/providers/credentials";
 import "next-auth/jwt";
 
@@ -48,8 +48,6 @@ declare module "next-auth/jwt" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authConfig = {
-  // session: { strategy: "jwt", maxAge: 60 * 1 }, // 1 minute
-  // session: { strategy: "jwt", maxAge: 60 * 60 }, // 1 hour
   session: { strategy: "jwt", maxAge: 60 * 60 * 24 }, // 1 day
   adapter: PrismaAdapter(db),
   pages: {
@@ -81,26 +79,24 @@ export const authConfig = {
             role: true,
           },
         });
+        // Jika user tidak ditemukan
         if (!user) {
-          return null;
-          // throw new Error("User not found");
+          throw new Error("Email atau password yang Anda masukkan salah.");
         }
+
         const userPassword = user.password;
 
         if (!userPassword) {
-          return null;
-          // throw new Error("Password not found");
+          throw new Error("Email atau password yang Anda masukkan salah.");
         }
 
         const passwordMatches = await compare(password, userPassword);
-
-        // console.log("PASSWORDS MATCH: ", passwordMatches);
-
-        if (passwordMatches) {
+        if (!passwordMatches) {
+          throw new Error("Email atau password yang Anda masukkan salah.");
+        } else {
           const { password, ...userWithoutPassword } = user;
           return userWithoutPassword;
         }
-        return null;
       },
     }),
   ],

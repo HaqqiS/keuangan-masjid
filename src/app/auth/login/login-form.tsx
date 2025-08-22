@@ -14,9 +14,15 @@ import { loginFormSchema, type LoginFormSchema } from "@/types/user.types";
 import { useForm } from "react-hook-form";
 // import { Label } from "@/components/ui/label";
 import { signIn } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import InputPassword from "@/app/_components/shared/input-password";
 
 export default function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
+
   // HOOK FORMS
   const loginForm = useForm<LoginFormSchema>({
     resolver: zodResolver(loginFormSchema),
@@ -25,35 +31,28 @@ export default function LoginForm() {
       password: "",
     },
   });
+  const { setError } = loginForm;
 
   //HANDLERS
   const handleSubmit = async (data: LoginFormSchema) => {
-    // console.log("LOGIN DATA: ", data);
+    console.log("LOGIN DATA: ", data);
     const result = await signIn("credentials", {
       email: data.email,
       password: data.password,
+      redirect: false,
     });
 
-    if (result?.ok) {
-      toast("Login successful.");
-    } else if (result?.error) {
-      toast("Login failed.");
+    if (result?.error) {
+      setError("root", {
+        type: "manual",
+        message: "Email atau password yang Anda masukkan salah.",
+      });
+    } else if (result?.ok) {
+      toast.success("Login berhasil!");
+
+      router.push(callbackUrl ?? "/");
     }
   };
-
-  // const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-  //   event.preventDefault();
-  //   const formData = new FormData(event.currentTarget);
-  //   const email = formData.get("email");
-  //   const password = formData.get("password");
-
-  //   console.log("LOGIN DATA: ", { email, password });
-  //   await signIn("credentials", {
-  //     email,
-  //     password,
-  //     redirectTo: "/",
-  //   });
-  // };
 
   return (
     // <form onSubmit={handleSubmit}>
@@ -79,13 +78,6 @@ export default function LoginForm() {
                 </FormItem>
               )}
             />
-            {/* <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            name="email"
-            placeholder="Ahmad@mail.com"
-            required
-          /> */}
           </div>
           <div className="grid gap-3">
             <FormField
@@ -95,16 +87,25 @@ export default function LoginForm() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} required />
+                    {/* <Input type="password" {...field} required /> */}
+                    <InputPassword {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             {/* <Label htmlFor="password">Password</Label>
           <Input id="password" name="password" type="password" required /> */}
           </div>
           <div className="flex flex-col gap-3">
+            <FormField
+              control={loginForm.control}
+              name="root"
+              render={({ fieldState }) => (
+                <FormMessage>{fieldState.error?.message}</FormMessage>
+              )}
+            />
             <Button type="submit" className="w-full">
               Login
             </Button>

@@ -12,7 +12,7 @@ export default function SigninLogoutButton({
   const isLogin = useSession();
   const session = isLogin.data;
 
-  console.log("Session in SigninLogoutButton:", session);
+  // console.log("Session in SigninLogoutButton:", session);
   return (
     <>
       {!session ? (
