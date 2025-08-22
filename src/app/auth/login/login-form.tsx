@@ -35,7 +35,6 @@ export default function LoginForm() {
 
   //HANDLERS
   const handleSubmit = async (data: LoginFormSchema) => {
-    console.log("LOGIN DATA: ", data);
     const result = await signIn("credentials", {
       email: data.email,
       password: data.password,

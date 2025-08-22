@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import { useSortable } from "@dnd-kit/sortable";
-import { IconDotsVertical, IconGripVertical } from "@tabler/icons-react";
+import {
+  IconCircleCheckFilled,
+  IconCircleXFilled,
+  IconDotsVertical,
+  IconGripVertical,
+  IconLoader,
+} from "@tabler/icons-react";
 import { type ColumnDef } from "@tanstack/react-table";
 
 import { Badge } from "@/components/ui/badge";
@@ -150,6 +156,14 @@ export const columns = ({
                       : "text-muted-foreground"
                 }`}
               >
+                {row.original.status === StatusPengajuan.APPROVED ? (
+                  <IconCircleCheckFilled className="fill-green-500 dark:fill-green-700" />
+                ) : row.original.status === StatusPengajuan.REJECTED ? (
+                  <IconCircleXFilled className="fill-red-500 dark:fill-red-700" />
+                ) : (
+                  <IconLoader />
+                )}
+
                 {row.original.status}
               </Badge>
             </div>
@@ -207,6 +221,14 @@ export const columns = ({
                     : "text-muted-foreground"
               }`}
             >
+              {row.original.status === StatusPengajuan.APPROVED ? (
+                <IconCircleCheckFilled className="fill-green-500 dark:fill-green-700" />
+              ) : row.original.status === StatusPengajuan.REJECTED ? (
+                <IconCircleXFilled className="fill-red-500 dark:fill-red-700" />
+              ) : (
+                <IconLoader />
+              )}
+
               {row.original.status}
             </Badge>
           </div>
