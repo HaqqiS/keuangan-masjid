@@ -8,6 +8,7 @@ import { ThemeProvider } from "./_components/providers/theme-provider";
 import { SessionProvider } from "next-auth/react";
 import type { Session } from "next-auth";
 import { Toaster } from "@/components/ui/sonner";
+import { auth } from "@/server/auth"; // <-- 1. Impor 'auth' dari file konfigurasi Anda
 
 export const metadata: Metadata = {
   title: "Create T3 App",
@@ -20,10 +21,11 @@ const geist = Geist({
   variable: "--font-geist-sans",
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
-  session,
-}: Readonly<{ children: React.ReactNode; session: Session | null }>) {
+}: Readonly<{ children: React.ReactNode }>) {
+  const session = await auth();
+
   return (
     <html lang="en" className={`${geist.variable}`} suppressHydrationWarning>
       <body>
