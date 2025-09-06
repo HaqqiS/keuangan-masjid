@@ -20,8 +20,6 @@ const basePemasukanSchema = z.object({
   kategoriId: z.string().uuid({ message: "Kategori tidak valid" }),
 });
 
-// 2. Skema untuk Form di KLIEN (fleksibel)
-//    Kita tambahkan field `transaksiImage` dengan tipe `z.any()`
 export const clientPemasukanFormSchema = basePemasukanSchema.extend({
   transaksiImage: z.any().optional(),
 });
@@ -30,8 +28,6 @@ export type ClientPemasukanFormSchema = z.infer<
   typeof clientPemasukanFormSchema
 >;
 
-// 3. Skema untuk validasi di SERVER (ketat)
-//    Kita tambahkan field `transaksiImageUrl` dengan tipe `z.string().url()`
 export const serverPemasukanFormSchema = basePemasukanSchema.extend({
   transaksiImageUrl: z
     .string()

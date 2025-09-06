@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toRupiah } from "@/utils/toRupiah";
-import type { PengeluaranTypeRouter } from "@/types/pemasukan.types";
+import type { PemasukanTypeRouter } from "@/types/pemasukan.types";
 import { dateFormatter } from "@/utils/dateFormatter";
 import Image from "next/image";
 
@@ -24,9 +24,9 @@ export const columns = ({
   onEditClick,
   onDeleteClick,
 }: {
-  onEditClick: (item: PengeluaranTypeRouter) => void;
+  onEditClick: (item: PemasukanTypeRouter) => void;
   onDeleteClick: (pemasukanId: string, pemasukanName: string) => void;
-}): ColumnDef<PengeluaranTypeRouter>[] => [
+}): ColumnDef<PemasukanTypeRouter>[] => [
   {
     id: "number",
     header: () =>

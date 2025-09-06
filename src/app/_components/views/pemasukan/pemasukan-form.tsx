@@ -16,13 +16,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { uploadFileToSignedUrl } from "@/lib/supabase";
-import { Bucket } from "@/server/bucket";
 import { api } from "@/trpc/react";
 import type { ClientPemasukanFormSchema } from "@/types/pemasukan.types";
 import { TypeKategori } from "@prisma/client";
 import Image from "next/image";
-import { useMemo, type ChangeEvent } from "react";
+import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -36,86 +34,6 @@ export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
   const { data: kategoris } = api.kategori.getKategori.useQuery({
     type: TypeKategori.PEMASUKAN,
   });
-  // const {
-  //   mutateAsync: createImagePresignedUrl,
-  //   isPending: isPendingCreateImage,
-  // } = api.file.createImagePresignedUrl.useMutation();
-  // const { mutateAsync: deleteImage } = api.file.deleteImage.useMutation();
-
-  // const imageChangeHandler = async (e: ChangeEvent<HTMLInputElement>) => {
-  //   const files = e.target.files;
-  //   if (files && files.length > 0) {
-  //     const file = files[0];
-
-  //     if (!file) return;
-
-  //     // 1. Validasi Ukuran File (contoh: maksimal 5MB)
-  //     const MAX_FILE_SIZE_MB = 10;
-  //     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-  //       toast.error(`Ukuran file tidak boleh melebihi ${MAX_FILE_SIZE_MB}MB.`);
-  //       e.target.value = ""; // Penting: Reset input file agar pengguna bisa memilih file lain
-  //       return; // Hentikan eksekusi fungsi
-  //     }
-
-  //     // 2. Validasi Tipe File
-  //     const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-  //     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-  //       toast.error(
-  //         "Format file tidak valid. Harap unggah JPG, PNG, atau WebP.",
-  //       );
-  //       e.target.value = ""; // Reset input file
-  //       return; // Hentikan eksekusi fungsi
-  //     }
-
-  //     const oldImageUrl = form.getValues("transaksiImageUrl");
-
-  //     const uploadPromise = async (): Promise<string> => {
-  //       if (oldImageUrl) {
-  //         try {
-  //           // Ekstrak path dari URL lengkap Supabase
-  //           const urlParts = oldImageUrl.split("/");
-  //           const imagePath = urlParts
-  //             .slice(urlParts.indexOf(Bucket.ImageTransaction) + 1)
-  //             .join("/");
-
-  //           // console.log("Menghapus gambar lama di path:", imagePath);
-  //           await deleteImage(imagePath);
-  //         } catch (error) {
-  //           console.error(
-  //             "Gagal menghapus gambar lama, proses dihentikan:",
-  //             error,
-  //           );
-  //           // Lemparkan error agar toast.promise menampilkannya dan menghentikan proses
-  //           throw new Error("Gagal menghapus gambar lama.");
-  //         }
-  //       }
-
-  //       const { path, token } = await createImagePresignedUrl({
-  //         originalFilename: file.name,
-  //         context: "pemasukan",
-  //       });
-
-  //       const newImageUrl = await uploadFileToSignedUrl({
-  //         file,
-  //         path,
-  //         token,
-  //         bucket: Bucket.ImageTransaction,
-  //       });
-
-  //       form.setValue("transaksiImageUrl", newImageUrl, {
-  //         shouldValidate: true,
-  //       });
-
-  //       return newImageUrl;
-  //     };
-
-  //     toast.promise(uploadPromise(), {
-  //       loading: "Mengunggah gambar...",
-  //       success: "Gambar berhasil diunggah!",
-  //       error: (err: any) => err.message ?? "Gagal mengunggah gambar.",
-  //     });
-  //   }
-  // };
 
   const transaksiImageValue = form.watch("transaksiImage");
 
@@ -268,25 +186,17 @@ export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
           />
 
           {previewUrl && (
-            <div className="relative mt-2 h-96 w-full rounded-md border md:h-48">
+            <div className="relative mt-2 h-fit w-full rounded-md border md:h-48">
               <Image
                 src={previewUrl}
                 alt="Preview"
-                fill
-                className="rounded-md object-cover"
+                height={384}
+                width={384}
+                // className="rounded-md object-cover"
+                className="h-auto w-auto rounded-md object-cover"
               />
             </div>
           )}
-          {/* {imageUrl && (
-            <div className="relative mt-2 h-96 w-full rounded-md border md:h-48">
-              <Image
-                src={imageUrl}
-                alt="Preview Bukti Transaksi"
-                fill
-                className="rounded-md object-cover"
-              />
-            </div>
-          )} */}
         </div>
       </div>
     </form>

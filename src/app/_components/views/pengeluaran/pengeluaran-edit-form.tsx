@@ -15,24 +15,27 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/trpc/react";
-import type { PengeluaranFormSchema } from "@/types/pengeluaran.type";
+import type { ClientPengeluaranFormSchema } from "@/types/pengeluaran.type";
 import { TypeKategori } from "@prisma/client";
 import { useFormContext } from "react-hook-form";
 
 type PengeluaranEditFormProps = {
-  onSubmit: (data: PengeluaranFormSchema) => void;
+  onSubmit: (data: ClientPengeluaranFormSchema) => void;
 };
 
 export default function PengeluaranEditForm({
   onSubmit,
 }: PengeluaranEditFormProps) {
-  const form = useFormContext<PengeluaranFormSchema>();
+  const form = useFormContext<ClientPengeluaranFormSchema>();
 
   const { data: kategoris } = api.kategori.getKategori.useQuery({
     type: TypeKategori.PENGELUARAN,
   });
 
-  const { data: pengajuans } = api.pengajuan.getPengajuan.useQuery();
+  const { data: pengajuans } = api.pengajuan.getPengajuan.useQuery({
+    pageSize: 50,
+    pageIndex: 0,
+  });
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -132,7 +135,7 @@ export default function PengeluaranEditForm({
                       <SelectItem value="none">
                         <span className="text-muted-foreground">Tidak Ada</span>
                       </SelectItem>
-                      {pengajuans?.map((pengajuan) => (
+                      {pengajuans?.data?.map((pengajuan) => (
                         <SelectItem key={pengajuan.id} value={pengajuan.id}>
                           {pengajuan.judul}
                         </SelectItem>

@@ -46,7 +46,7 @@ import type { PaginationState } from "@tanstack/react-table";
 import { keepPreviousData } from "@tanstack/react-query";
 import type { RouterOutputs } from "@/types";
 import { uploadFileToSignedUrl } from "@/lib/supabase";
-import { Bucket } from "@/server/bucket";
+import { Bucket, FolderBucket } from "@/server/bucket";
 
 interface PemasukanViewPageProps {
   initialData: RouterOutputs["pemasukan"]["getPemasukan"];
@@ -153,7 +153,7 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
   const handleFileUpload = async (file: File): Promise<string> => {
     const presignedData = await createImagePresignedUrl({
       originalFilename: file.name,
-      context: "pemasukan",
+      context: FolderBucket.Pemasukan,
     });
 
     const publicUrl = await uploadFileToSignedUrl({
@@ -188,8 +188,17 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
     toast.promise(promise(), {
       loading: "Menyimpan data...",
       success: "Pemasukan berhasil dibuat!",
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
-      error: (err: any) => err.message ?? "Gagal membuat pemasukan.",
+      error: (err: unknown) => {
+        // 1. Cek apakah 'err' adalah instance dari kelas Error
+        //    (TRPCError juga merupakan turunan dari Error, jadi ini akan berfungsi)
+        if (err instanceof Error) {
+          // Jika ya, TypeScript sekarang tahu bahwa `err.message` pasti ada
+          return err.message;
+        }
+
+        // 2. Jika bukan, berikan pesan error default yang aman
+        return "Gagal membuat pemasukan: Terjadi kesalahan tidak dikenal.";
+      },
     });
   };
 
@@ -239,8 +248,17 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
     toast.promise(promise(), {
       loading: "Memperbarui data...",
       success: "Pemasukan berhasil diperbarui!",
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
-      error: (err: any) => err.message ?? "Gagal memperbarui pemasukan.",
+      error: (err: unknown) => {
+        // 1. Cek apakah 'err' adalah instance dari kelas Error
+        //    (TRPCError juga merupakan turunan dari Error, jadi ini akan berfungsi)
+        if (err instanceof Error) {
+          // Jika ya, TypeScript sekarang tahu bahwa `err.message` pasti ada
+          return err.message;
+        }
+
+        // 2. Jika bukan, berikan pesan error default yang aman
+        return "Gagal membuat pemasukan: Terjadi kesalahan tidak dikenal.";
+      },
     });
   };
 

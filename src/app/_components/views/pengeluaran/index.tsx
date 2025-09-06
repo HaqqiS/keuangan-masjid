@@ -1,9 +1,7 @@
 "use client";
 import {
-  editPengeluaranFormSchema,
-  pengeluaranFormSchema,
-  type EditPengeluaranFormSchema,
-  type PengeluaranFormSchema,
+  clientPengeluaranFormSchema,
+  type ClientPengeluaranFormSchema,
   type PengeluaranTypeRouter,
 } from "@/types/pengeluaran.type";
 import {
@@ -45,6 +43,8 @@ import { PengeluaranEditDrawer } from "./pengeluaran-edit-drawer";
 import type { RouterOutputs } from "@/types";
 import { keepPreviousData } from "@tanstack/react-query";
 import type { PaginationState } from "@tanstack/react-table";
+import { Bucket, FolderBucket } from "@/server/bucket";
+import { uploadFileToSignedUrl } from "@/lib/supabase";
 
 interface PengeluaranPageViewProps {
   initialData: RouterOutputs["pengeluaran"]["getPengeluaran"];
@@ -71,8 +71,8 @@ export default function PengeluaranPageView({
   });
 
   // FORM HANDLING
-  const createPengeluaranForm = useForm<PengeluaranFormSchema>({
-    resolver: zodResolver(pengeluaranFormSchema),
+  const createPengeluaranForm = useForm<ClientPengeluaranFormSchema>({
+    resolver: zodResolver(clientPengeluaranFormSchema),
     defaultValues: {
       name: "",
       jumlah: 0,
@@ -80,8 +80,8 @@ export default function PengeluaranPageView({
       kategoriId: "",
     },
   });
-  const editPengeluaranForm = useForm<EditPengeluaranFormSchema>({
-    resolver: zodResolver(editPengeluaranFormSchema),
+  const editPengeluaranForm = useForm<ClientPengeluaranFormSchema>({
+    resolver: zodResolver(clientPengeluaranFormSchema),
   });
 
   // QUERIES MUTATIONS
@@ -92,13 +92,12 @@ export default function PengeluaranPageView({
       placeholderData: keepPreviousData,
     },
   );
-  const { mutate: createPengeluaran, isPending: isPendingCreate } =
+  const { mutateAsync: createPengeluaran, isPending: isPendingCreate } =
     api.pengeluaran.createPengeluaran.useMutation({
       onSuccess: async () => {
         await apiUtils.pengeluaran.getPengeluaran.invalidate();
         createPengeluaranForm.reset();
         setCreateFormPengeluaranOpen(false);
-        toast.success("Pengeluaran berhasil ditambahkan");
       },
       onError: (error) => {
         toast.error("Pengeluaran gagal ditambahkan", {
@@ -137,9 +136,52 @@ export default function PengeluaranPageView({
       },
     });
 
+  const { mutateAsync: createImagePresignedUrl } =
+    api.file.createImagePresignedUrl.useMutation();
+  const { mutateAsync: deleteImage } = api.file.deleteImage.useMutation();
+
   // HANDLERS
-  const handleSubmitCreatePengeluaran = (data: PengeluaranFormSchema) => {
-    createPengeluaran(data);
+  const handleFileUpload = async (file: File): Promise<string> => {
+    const presignedData = await createImagePresignedUrl({
+      originalFilename: file.name,
+      context: FolderBucket.Pengeluaran,
+    });
+
+    const publicUrl = await uploadFileToSignedUrl({
+      file,
+      path: presignedData.path,
+      token: presignedData.token,
+      bucket: Bucket.ImageTransaction,
+    });
+
+    return publicUrl;
+  };
+
+  const handleSubmitCreatePengeluaran = (data: ClientPengeluaranFormSchema) => {
+    if (!(data.transaksiImage instanceof File)) {
+      toast.error("Anda harus mengunggah gambar bukti transaksi.");
+    }
+
+    const promise = async () => {
+      const publicUrl = await handleFileUpload(data.transaksiImage as File);
+      await createPengeluaran({ ...data, transaksiImageUrl: publicUrl });
+    };
+
+    toast.promise(promise(), {
+      loading: "Menyimpan data...",
+      success: "Pengeluaran berhasil dibuat!",
+      error: (err: unknown) => {
+        // 1. Cek apakah 'err' adalah instance dari kelas Error
+        //    (TRPCError juga merupakan turunan dari Error, jadi ini akan berfungsi)
+        if (err instanceof Error) {
+          // Jika ya, TypeScript sekarang tahu bahwa `err.message` pasti ada
+          return err.message;
+        }
+
+        // 2. Jika bukan, berikan pesan error default yang aman
+        return "Gagal membuat pemasukan: Terjadi kesalahan tidak dikenal.";
+      },
+    });
   };
 
   const handleClickDeletePengeluaran = (
@@ -170,7 +212,7 @@ export default function PengeluaranPageView({
     });
   };
 
-  const handleSubmitEditPengeluaran = (data: EditPengeluaranFormSchema) => {
+  const handleSubmitEditPengeluaran = (data: ClientPengeluaranFormSchema) => {
     if (!selectedPengeluaranToEdit) return;
     updatePengeluaran({ id: selectedPengeluaranToEdit.id, ...data });
   };

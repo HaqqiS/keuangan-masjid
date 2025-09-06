@@ -1,9 +1,8 @@
-import {
-  editPengeluaranFormSchema,
-  pengeluaranFormSchema,
-} from "@/types/pengeluaran.type";
+import { serverPengeluaranFormSchema } from "@/types/pengeluaran.type";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import z from "zod";
+import { Bucket } from "@/server/bucket";
+import { fileRouter } from "./file.router";
 
 export const pengeluaranRouter = createTRPCRouter({
   getPengeluaran: protectedProcedure
@@ -28,6 +27,7 @@ export const pengeluaranRouter = createTRPCRouter({
             name: true,
             jumlah: true,
             keterangan: true,
+            transaksiImageUrl: true,
             pengajuan: {
               select: {
                 id: true,
@@ -71,7 +71,7 @@ export const pengeluaranRouter = createTRPCRouter({
     }),
 
   createPengeluaran: protectedProcedure
-    .input(pengeluaranFormSchema)
+    .input(serverPengeluaranFormSchema)
     .mutation(async ({ ctx, input }) => {
       const { db } = ctx;
 
@@ -83,6 +83,7 @@ export const pengeluaranRouter = createTRPCRouter({
           kategoriId: input.kategoriId,
           pengajuanId: input.pengajuanId,
           createdById: ctx.session.user.id,
+          transaksiImageUrl: input.transaksiImageUrl,
         },
       });
 
@@ -90,13 +91,29 @@ export const pengeluaranRouter = createTRPCRouter({
     }),
 
   deletePengeluaran: protectedProcedure
-    .input(
-      z.object({
-        pengeluaranId: z.string().uuid({ message: "ID tidak valid" }),
-      }),
-    )
+    .input(z.object({ pengeluaranId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const { db } = ctx;
+      const pengeluaran = await db.pengeluaran.findUnique({
+        where: { id: input.pengeluaranId },
+        select: { transaksiImageUrl: true },
+      });
+
+      if (pengeluaran?.transaksiImageUrl) {
+        const urlParts = pengeluaran.transaksiImageUrl.split("/");
+        // Ambil path setelah nama bucket, misal: "pemasukan/user_id-timestamp-random.jpg"
+        const imagePath = urlParts
+          .slice(urlParts.indexOf(Bucket.ImageTransaction) + 1)
+          .join("/");
+
+        // console.log("Path Image to Delete di Router:", imagePath);
+
+        // 2. Buat "caller" untuk fileRouter
+        const fileCaller = fileRouter.createCaller(ctx);
+
+        // 3. Panggil prosedur deleteImage melalui caller
+        await fileCaller.deleteImage(imagePath);
+      }
 
       const result = await db.pengeluaran.delete({
         where: { id: input.pengeluaranId },
@@ -107,7 +124,7 @@ export const pengeluaranRouter = createTRPCRouter({
 
   updatePengeluaran: protectedProcedure
     .input(
-      editPengeluaranFormSchema.extend({
+      serverPengeluaranFormSchema.extend({
         id: z.string().uuid({ message: "ID tidak valid" }),
       }),
     )

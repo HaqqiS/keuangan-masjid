@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/server/supabase-admin";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { Bucket } from "@/server/bucket";
+import { Bucket, FolderBucket } from "@/server/bucket";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import path from "node:path";
@@ -11,7 +11,7 @@ export const fileRouter = createTRPCRouter({
     .input(
       z.object({
         originalFilename: z.string(),
-        context: z.enum(["pemasukan", "pengeluaran"]),
+        context: z.enum([FolderBucket.Pemasukan, FolderBucket.Pengeluaran]),
       }),
     )
     .mutation(async ({ ctx, input }) => {

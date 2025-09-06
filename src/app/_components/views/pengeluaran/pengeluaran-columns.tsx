@@ -17,6 +17,7 @@ import {
 import { toRupiah } from "@/utils/toRupiah";
 import type { PengeluaranTypeRouter } from "@/types/pengeluaran.type";
 import { dateFormatter } from "@/utils/dateFormatter";
+import Image from "next/image";
 
 // Create a separate component for the drag handle
 function DragHandle({ id }: { id: string }) {
@@ -103,6 +104,23 @@ export const columns = ({
     header: "Dibuat oleh",
     cell: ({ row }) => {
       return row.original.createdBy.name;
+    },
+  },
+  {
+    accessorKey: "transaksiImageUrl",
+    header: "Bukti Transaksi",
+    cell: ({ row }) => {
+      return row.original.transaksiImageUrl ? (
+        <Image
+          src={row.original.transaksiImageUrl}
+          alt="Bukti Transaksi"
+          width={50}
+          height={50}
+          className="rounded-md"
+        />
+      ) : (
+        <div className="text-muted-foreground">Tidak ada bukti</div>
+      );
     },
   },
   {

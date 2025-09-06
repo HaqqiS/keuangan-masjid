@@ -26,7 +26,7 @@ export type PengeluaranType = {
   updatedAt: string;
 };
 
-export const pengeluaranFormSchema = z.object({
+export const basePengeluaranFormSchema = z.object({
   name: string().min(1, { message: "Nama pengeluaran tidak boleh kosong" }),
   jumlah: z.coerce
     .number()
@@ -35,10 +35,6 @@ export const pengeluaranFormSchema = z.object({
     .max(255, { message: "Keterangan tidak boleh lebih dari 255 karakter" })
     .optional(),
   kategoriId: z.string().uuid({ message: "Kategori tidak valid" }),
-  pengajuanId: z.string().uuid().optional(),
-});
-
-export const editPengeluaranFormSchema = pengeluaranFormSchema.extend({
   pengajuanId: z
     .string()
     .uuid({ message: "Pengajuan tidak valid" })
@@ -46,7 +42,21 @@ export const editPengeluaranFormSchema = pengeluaranFormSchema.extend({
     .optional(),
 });
 
-export type PengeluaranFormSchema = z.infer<typeof pengeluaranFormSchema>;
-export type EditPengeluaranFormSchema = z.infer<
-  typeof editPengeluaranFormSchema
+export const clientPengeluaranFormSchema = basePengeluaranFormSchema.extend({
+  transaksiImage: z.any().optional(),
+});
+
+export const serverPengeluaranFormSchema = basePengeluaranFormSchema.extend({
+  transaksiImageUrl: z
+    .string()
+    .url({ message: "URL gambar tidak valid" })
+    .optional(),
+});
+
+export type ClientPengeluaranFormSchema = z.infer<
+  typeof clientPengeluaranFormSchema
+>;
+
+export type ServerPengeluaranFormSchema = z.infer<
+  typeof serverPengeluaranFormSchema
 >;
