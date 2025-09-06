@@ -126,7 +126,6 @@ export const columns = ({
     header: "Dibuat pada",
 
     cell: ({ row }) => {
-      console.log("Created At:", row.original.createdAt);
       const formattedDate = dateFormatter(row.original.createdAt);
       return formattedDate;
     },

@@ -58,7 +58,6 @@ export default function PengajuanPageView({
 
   const session = useSession();
   const userRole = session.data?.user.role;
-  // console.log("Session:", session.data?.user);
 
   const [createFormPengajuanOpen, setCreateFormPengajuanOpen] = useState(false);
   const [deletePengajuanDialogOpen, setDeletePengajuanDialogOpen] =

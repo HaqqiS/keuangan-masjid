@@ -25,6 +25,8 @@ export function PemasukanEditDrawer({
   form,
   handleSubmitEditPemasukan,
   isPending,
+  uploadedEditPemasukanImageUrl,
+  setUploadedEditPemasukanImageUrl,
   // children,
 }: {
   isOpen: boolean;
@@ -32,13 +34,11 @@ export function PemasukanEditDrawer({
   form: ReturnType<typeof useForm<PemasukanFormSchema>>;
   handleSubmitEditPemasukan: (data: PemasukanFormSchema) => void;
   isPending: boolean;
+  uploadedEditPemasukanImageUrl: string | null;
+  setUploadedEditPemasukanImageUrl: (imageUrl: string | null) => void;
   // children?: ReactNode;
 }) {
   const isMobile = useIsMobile();
-  const [uploadedCreatePemasukanImageUrl, setUploadedCreatePemasukanImageUrl] =
-    useState<string | null>(null);
-
-  console.log(form.getValues("transaksiImageUrl"));
 
   return (
     <Drawer
@@ -56,7 +56,7 @@ export function PemasukanEditDrawer({
             <PemasukanForm
               onSubmit={handleSubmitEditPemasukan}
               onChangeImageUrl={(imageUrl: string) =>
-                setUploadedCreatePemasukanImageUrl(imageUrl)
+                setUploadedEditPemasukanImageUrl(imageUrl)
               }
             />
           </Form>

@@ -87,7 +87,6 @@ export const pengajuanRouter = createTRPCRouter({
         where: { id: input.pengajuanId },
       });
 
-      // console.log("Pengajuan deleted:", result);
       return result;
     }),
 

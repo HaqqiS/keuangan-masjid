@@ -37,4 +37,23 @@ export const fileRouter = createTRPCRouter({
 
       return data;
     }),
+
+  deleteImage: protectedProcedure
+    .input(z.string())
+    .mutation(async ({ input }) => {
+      console.log("Path Image to Delete", input);
+
+      const { data, error } = await supabaseAdmin.storage
+        .from(Bucket.ImageTransaction)
+        .remove([input]);
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error.message,
+        });
+      }
+
+      return data;
+    }),
 });

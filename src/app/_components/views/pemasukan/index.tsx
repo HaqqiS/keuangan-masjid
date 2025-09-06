@@ -60,6 +60,9 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
   const [editFormPemasukanOpen, setEditFormPemasukanOpen] = useState(false);
   const [selectedPemasukanToEdit, setSelectedPemasukanToEdit] =
     useState<PengeluaranTypeRouter | null>(null);
+  const [uploadedEditPemasukanImageUrl, setUploadedEditPemasukanImageUrl] =
+    useState<string | null>(null);
+
   const [deletePemasukanDialogOpen, setDeletePemasukanDialogOpen] =
     useState(false);
   const [selectedPemasukanToDelete, setSelectedPemasukanToDelete] = useState<{
@@ -155,8 +158,6 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
       return;
     }
 
-    console.log("STATE imageUrl", uploadedCreatePemasukanImageUrl);
-    console.log("FORM imageUrl", data.transaksiImageUrl);
     createPemasukan({
       name: data.name,
       jumlah: data.jumlah,
@@ -175,12 +176,11 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
       jumlah: pemasukan.jumlah,
       keterangan: pemasukan.keterangan ?? "",
       kategoriId: pemasukan.kategori.id,
-      transaksiImageUrl: "",
+      transaksiImageUrl: pemasukan.transaksiImageUrl ?? "",
     });
   };
 
   const handleSubmitEditPemasukan = (data: PemasukanFormSchema) => {
-    // console.log("Submit Edit Pemasukan", editPemasukanForm.getValues());
     if (!selectedPemasukanToEdit) return;
 
     updatePemasukan({ id: selectedPemasukanToEdit.id, ...data });
@@ -213,6 +213,8 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
           form={editPemasukanForm}
           handleSubmitEditPemasukan={handleSubmitEditPemasukan}
           isPending={isPendingUpdate}
+          uploadedEditPemasukanImageUrl={uploadedEditPemasukanImageUrl}
+          setUploadedEditPemasukanImageUrl={setUploadedEditPemasukanImageUrl}
         />
       )}
 

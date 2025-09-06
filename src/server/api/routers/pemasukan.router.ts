@@ -1,6 +1,8 @@
 import z from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { pemasukanFormSchema } from "@/types/pemasukan.types";
+import { fileRouter } from "./file.router";
+import { Bucket } from "@/server/bucket";
 
 export const pemasukanRouter = createTRPCRouter({
   getPemasukan: protectedProcedure
@@ -89,6 +91,27 @@ export const pemasukanRouter = createTRPCRouter({
     .input(z.object({ pemasukanId: z.string().uuid() }))
     .mutation(async ({ input, ctx }) => {
       const { db } = ctx;
+
+      const pemasukan = await db.pemasukan.findUnique({
+        where: { id: input.pemasukanId },
+        select: { transaksiImageUrl: true },
+      });
+
+      if (pemasukan?.transaksiImageUrl) {
+        const urlParts = pemasukan.transaksiImageUrl.split("/");
+        // Ambil path setelah nama bucket, misal: "pemasukan/user_id-timestamp-random.jpg"
+        const imagePath = urlParts
+          .slice(urlParts.indexOf(Bucket.ImageTransaction) + 1)
+          .join("/");
+
+        console.log("Path Image to Delete di Router:", imagePath);
+
+        // 2. Buat "caller" untuk fileRouter
+        const fileCaller = fileRouter.createCaller(ctx);
+
+        // 3. Panggil prosedur deleteImage melalui caller
+        await fileCaller.deleteImage(imagePath);
+      }
 
       const result = await db.pemasukan.delete({
         where: { id: input.pemasukanId },

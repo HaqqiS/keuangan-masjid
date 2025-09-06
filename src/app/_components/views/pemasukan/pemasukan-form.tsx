@@ -194,7 +194,7 @@ export default function PemasukanForm({
                     type="file"
                     accept="image/*"
                     onChange={imageChangeHandler} // Handler tetap di sini
-                    {...field}
+                    // {...field}
                   />
                 </FormControl>
                 <FormDescription>
@@ -207,17 +207,7 @@ export default function PemasukanForm({
 
           {/* Tampilkan preview jika imageUrl sudah ada */}
           {imageUrl && (
-            <div className="relative mt-2 h-48 w-full rounded-md border">
-              <Image
-                src={imageUrl}
-                alt="Preview Bukti Transaksi"
-                fill
-                className="rounded-md object-cover"
-              />
-            </div>
-          )}
-          {imageUrl && (
-            <div className="relative mt-2 h-48 w-full rounded-md border">
+            <div className="relative mt-2 h-96 w-full rounded-md border md:h-48">
               <Image
                 src={imageUrl}
                 alt="Preview Bukti Transaksi"
