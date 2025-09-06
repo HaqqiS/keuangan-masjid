@@ -3,42 +3,59 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { pemasukanFormSchema } from "@/types/pemasukan.types";
 
 export const pemasukanRouter = createTRPCRouter({
-  getPemasukan: protectedProcedure.query(async ({ ctx }) => {
-    const { db } = ctx;
+  getPemasukan: protectedProcedure
+    .input(
+      z.object({
+        pageSize: z.number(),
+        pageIndex: z.number(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { db } = ctx;
+      const { pageIndex, pageSize } = input;
 
-    const pemasukans = await db.pemasukan.findMany({
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        name: true,
-        jumlah: true,
-        keterangan: true,
-        createdAt: true,
-        updatedAt: true,
-        createdBy: {
+      const skip = pageIndex * pageSize;
+
+      const [pemasukan, totalCount] = await db.$transaction([
+        db.pemasukan.findMany({
+          skip: skip,
+          take: pageSize,
+          orderBy: { createdAt: "desc" },
           select: {
             id: true,
             name: true,
+            jumlah: true,
+            keterangan: true,
+            transaksiImageUrl: true,
+            createdAt: true,
+            updatedAt: true,
+            createdBy: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            kategori: {
+              select: {
+                name: true,
+                id: true,
+              },
+            },
           },
-        },
-        kategori: {
-          select: {
-            name: true,
-            id: true,
-          },
-        },
-      },
-    });
+        }),
 
-    const transformedData = pemasukans.map((pemasukan) => ({
-      ...pemasukan,
-      jumlah: pemasukan.jumlah.toNumber(),
-      createdAt: pemasukan.createdAt.toISOString(),
-      updatedAt: pemasukan.updatedAt.toISOString(),
-    }));
+        db.pemasukan.count(), // Query untuk menghitung total semua pemasukan
+      ]);
 
-    return transformedData;
-  }),
+      const transformedData = pemasukan.map((pemasukan) => ({
+        ...pemasukan,
+        jumlah: pemasukan.jumlah.toNumber(),
+        createdAt: pemasukan.createdAt.toISOString(),
+        updatedAt: pemasukan.updatedAt.toISOString(),
+      }));
+
+      return { data: transformedData, totalCount };
+    }),
 
   createPemasukan: protectedProcedure
     .input(
@@ -59,6 +76,7 @@ export const pemasukanRouter = createTRPCRouter({
           keterangan: input.keterangan,
           jumlah: input.jumlah,
           kategoriId: input.kategoriId,
+          transaksiImageUrl: input.transaksiImageUrl,
           // createdBy: { connect: { id: ctx.session.user.id } },
           createdById: ctx.session.user.id,
         },

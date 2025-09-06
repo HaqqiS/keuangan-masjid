@@ -15,6 +15,7 @@ import type { PemasukanFormSchema } from "@/types/pemasukan.types";
 import PemasukanForm from "./pemasukan-form";
 import { Form } from "@/components/ui/form";
 import { type useForm } from "react-hook-form";
+import { useState } from "react";
 
 // export function PemasukanEditDrawer
 // ({ item }: { item: z.infer<typeof schema> }) {
@@ -34,6 +35,10 @@ export function PemasukanEditDrawer({
   // children?: ReactNode;
 }) {
   const isMobile = useIsMobile();
+  const [uploadedCreatePemasukanImageUrl, setUploadedCreatePemasukanImageUrl] =
+    useState<string | null>(null);
+
+  console.log(form.getValues("transaksiImageUrl"));
 
   return (
     <Drawer
@@ -48,7 +53,12 @@ export function PemasukanEditDrawer({
         </DrawerHeader>
         <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
           <Form {...form}>
-            <PemasukanForm onSubmit={handleSubmitEditPemasukan} />
+            <PemasukanForm
+              onSubmit={handleSubmitEditPemasukan}
+              onChangeImageUrl={(imageUrl: string) =>
+                setUploadedCreatePemasukanImageUrl(imageUrl)
+              }
+            />
           </Form>
           {/* {children} */}
         </div>

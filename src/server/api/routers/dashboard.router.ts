@@ -15,6 +15,36 @@ const calculatePercentageChange = (
 };
 
 export const dashboardRouter = createTRPCRouter({
+  getPengajuan: protectedProcedure.query(async ({ ctx }) => {
+    const { db } = ctx;
+
+    const pengajuan = await db.pengajuan.findMany({
+      take: 10,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        judul: true,
+        keterangan: true,
+        jumlah: true,
+        status: true,
+        kategori: { select: { id: true, name: true } },
+        diajukanOleh: { select: { id: true, name: true } },
+        Pengeluaran: { select: { id: true, name: true } },
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    const transformedData = pengajuan.map((item) => ({
+      ...item,
+      jumlah: item.jumlah.toNumber(),
+      createdAt: item.createdAt.toISOString(),
+      updatedAt: item.updatedAt.toISOString(),
+    }));
+
+    return transformedData;
+  }),
+
   getDashboardStats: protectedProcedure.query(async ({ ctx }) => {
     const now = new Date();
     // Bulan ini

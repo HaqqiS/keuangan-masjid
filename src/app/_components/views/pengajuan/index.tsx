@@ -42,9 +42,12 @@ import { useState } from "react";
 import { PengajuanEditDrawer } from "./pengajuna-edit-drawer";
 import { StatusPengajuan, UserRole } from "@prisma/client";
 import { useSession } from "next-auth/react";
+import type { RouterOutputs } from "@/types";
+import { keepPreviousData } from "@tanstack/react-query";
+import type { PaginationState } from "@tanstack/react-table";
 
 interface PengajuanPageViewProps {
-  initialData: PengajuanTypeRouter[];
+  initialData: RouterOutputs["pengajuan"]["getPengajuan"];
 }
 
 export default function PengajuanPageView({
@@ -67,6 +70,10 @@ export default function PengajuanPageView({
   const [editFormPengajuanOpen, setEditFormPengajuanOpen] = useState(false);
   const [selectedPengajuanToEdit, setSelectedPengajuanToEdit] =
     useState<PengajuanTypeRouter | null>(null);
+  const [{ pageIndex, pageSize }, setPagination] = useState<PaginationState>({
+    pageIndex: 0, // Halaman awal
+    pageSize: 10, // Default item per halaman
+  });
 
   // HOOK FORMS
   const createPengajuanForm = useForm<PengajuanFormSchema>({
@@ -85,9 +92,16 @@ export default function PengajuanPageView({
 
   // QUERIES MUTATIONS
   const { data: dataPengajuan } = api.pengajuan.getPengajuan.useQuery(
-    undefined,
-    { initialData: initialData },
+    { pageIndex, pageSize },
+    {
+      initialData: pageIndex === 0 && pageSize === 10 ? initialData : undefined,
+      placeholderData: keepPreviousData,
+    },
   );
+
+  const pageCount = dataPengajuan
+    ? Math.ceil(dataPengajuan.totalCount / pageSize)
+    : 0;
 
   const { mutate: createPengajuan, isPending: isPendingCreate } =
     api.pengajuan.createPengajuan.useMutation({
@@ -314,7 +328,14 @@ export default function PengajuanPageView({
           </div>
         </DashboardHeader>
 
-        <DataTable data={dataPengajuan} columns={columns} />
+        <DataTable
+          data={dataPengajuan?.data ?? []}
+          columns={columns}
+          pageCount={pageCount}
+          pagination={{ pageIndex, pageSize }}
+          onPaginationChange={setPagination}
+          // isLoading={isLoadingPemasukan}
+        />
       </div>
     </>
   );

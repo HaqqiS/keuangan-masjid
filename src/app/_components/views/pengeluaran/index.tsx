@@ -42,9 +42,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import PengeluaranCreateForm from "./pengeluaran-create-form";
 import { toast } from "sonner";
 import { PengeluaranEditDrawer } from "./pengeluaran-edit-drawer";
+import type { RouterOutputs } from "@/types";
+import { keepPreviousData } from "@tanstack/react-query";
+import type { PaginationState } from "@tanstack/react-table";
 
 interface PengeluaranPageViewProps {
-  initialData: PengeluaranTypeRouter[];
+  initialData: RouterOutputs["pengeluaran"]["getPengeluaran"];
 }
 
 export default function PengeluaranPageView({
@@ -62,6 +65,10 @@ export default function PengeluaranPageView({
   const [editFormPengeluaranOpen, setEditFormPengeluaranOpen] = useState(false);
   const [selectedPengeluaranToEdit, setSelectedPengeluaranToEdit] =
     useState<PengeluaranTypeRouter | null>(null);
+  const [{ pageIndex, pageSize }, setPagination] = useState<PaginationState>({
+    pageIndex: 0, // Halaman awal
+    pageSize: 10, // Default item per halaman
+  });
 
   // FORM HANDLING
   const createPengeluaranForm = useForm<PengeluaranFormSchema>({
@@ -79,8 +86,11 @@ export default function PengeluaranPageView({
 
   // QUERIES MUTATIONS
   const { data: dataPengeluaran } = api.pengeluaran.getPengeluaran.useQuery(
-    undefined,
-    { initialData: initialData },
+    { pageIndex, pageSize },
+    {
+      initialData: pageIndex === 0 && pageSize === 10 ? initialData : undefined,
+      placeholderData: keepPreviousData,
+    },
   );
   const { mutate: createPengeluaran, isPending: isPendingCreate } =
     api.pengeluaran.createPengeluaran.useMutation({
@@ -296,7 +306,13 @@ export default function PengeluaranPageView({
           </div>
         </DashboardHeader>
 
-        <DataTable data={dataPengeluaran} columns={columns} />
+        <DataTable
+          data={dataPengeluaran?.data ?? []}
+          columns={columns}
+          pageCount={dataPengeluaran?.pageCount ?? 0}
+          pagination={{ pageIndex, pageSize }}
+          onPaginationChange={setPagination}
+        />
       </div>
     </>
   );

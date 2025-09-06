@@ -107,10 +107,11 @@ model Kategori {
 }
 
 model Pemasukan {
-    id         String  @id @default(uuid())
-    name       String
-    keterangan String?
-    jumlah     Decimal
+    id                String  @id @default(uuid())
+    name              String
+    keterangan        String?
+    jumlah            Decimal
+    transaksiImageUrl String?
 
     kategori   Kategori @relation(fields: [kategoriId], references: [id])
     kategoriId String
@@ -129,10 +130,11 @@ enum StatusPengajuan {
 }
 
 model Pengeluaran {
-    id         String  @id @default(uuid())
-    name       String
-    keterangan String?
-    jumlah     Decimal
+    id                String  @id @default(uuid())
+    name              String
+    keterangan        String?
+    jumlah            Decimal
+    transaksiImageUrl String?
 
     pengajuanId String?    @unique
     pengajuan   Pengajuan? @relation(fields: [pengajuanId], references: [id])

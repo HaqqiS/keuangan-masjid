@@ -5,6 +5,15 @@
 import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config = {
+  images: {
+    remotePatterns: [
+      new URL("https://placehold.co/**"),
+      new URL(
+        "https://newofxgrkewndmnxubzi.supabase.co/storage/v1/object/public/image-transaction/**",
+      ),
+    ],
+  },
+};
 
 export default config;

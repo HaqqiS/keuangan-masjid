@@ -6,48 +6,69 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import z from "zod";
 
 export const pengeluaranRouter = createTRPCRouter({
-  getPengeluaran: protectedProcedure.query(async ({ ctx }) => {
-    const { db } = ctx;
-    const pengeluaran = await db.pengeluaran.findMany({
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        name: true,
-        jumlah: true,
-        keterangan: true,
-        pengajuan: {
-          select: {
-            id: true,
-            status: true,
-            diajukanOleh: { select: { id: true, name: true } },
-          },
-        },
-        kategori: {
+  getPengeluaran: protectedProcedure
+    .input(
+      z.object({
+        pageSize: z.number(),
+        pageIndex: z.number(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { db } = ctx;
+      const { pageIndex, pageSize } = input;
+
+      const skip = pageIndex * pageSize;
+      const [pengeluaran, totalCount] = await db.$transaction([
+        db.pengeluaran.findMany({
+          skip: skip,
+          take: pageSize,
+          orderBy: { createdAt: "desc" },
           select: {
             id: true,
             name: true,
+            jumlah: true,
+            keterangan: true,
+            pengajuan: {
+              select: {
+                id: true,
+                status: true,
+                diajukanOleh: { select: { id: true, name: true } },
+              },
+            },
+            kategori: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            createdBy: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            createdAt: true,
+            updatedAt: true,
           },
-        },
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+        }),
+        db.pengeluaran.count(),
+      ]);
 
-    const transformedData = pengeluaran.map((pengeluaran) => ({
-      ...pengeluaran,
-      jumlah: pengeluaran.jumlah.toNumber(),
-      createdAt: pengeluaran.createdAt.toISOString(),
-      updatedAt: pengeluaran.updatedAt.toISOString(),
-    }));
+      const transformedData = pengeluaran.map((pengeluaran) => ({
+        ...pengeluaran,
+        jumlah: pengeluaran.jumlah.toNumber(),
+        createdAt: pengeluaran.createdAt.toISOString(),
+        updatedAt: pengeluaran.updatedAt.toISOString(),
+      }));
 
-    return transformedData;
-  }),
+      const pageCount = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 0;
+
+      return {
+        data: transformedData,
+        // totalCount,
+        pageCount,
+      };
+    }),
 
   createPengeluaran: protectedProcedure
     .input(pengeluaranFormSchema)

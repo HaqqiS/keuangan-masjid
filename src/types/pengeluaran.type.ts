@@ -1,15 +1,9 @@
-import type { AppRouter } from "@/server/api/root";
 import type { StatusPengajuan } from "@prisma/client";
-import type { inferRouterOutputs } from "@trpc/server";
 import z, { string } from "zod";
+import type { RouterOutputs } from ".";
 
-// 1. Buat tipe helper untuk semua output router Anda
-type RouterOutputs = inferRouterOutputs<AppRouter>;
-
-// 2. Ambil tipe spesifik dari output endpoint 'getPengeluaran'
-//    [number] digunakan untuk mengambil tipe satu objek dari array yang dikembalikan
 export type PengeluaranTypeRouter =
-  RouterOutputs["pengeluaran"]["getPengeluaran"][number];
+  RouterOutputs["pengeluaran"]["getPengeluaran"]["data"][number];
 
 export type PengeluaranType = {
   id: string;

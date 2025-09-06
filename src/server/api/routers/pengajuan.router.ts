@@ -4,34 +4,49 @@ import { StatusPengajuan } from "@prisma/client";
 import z from "zod";
 
 export const pengajuanRouter = createTRPCRouter({
-  getPengajuan: protectedProcedure.query(async ({ ctx }) => {
-    const { db } = ctx;
+  getPengajuan: protectedProcedure
+    .input(
+      z.object({
+        pageSize: z.number().default(10),
+        pageIndex: z.number().default(0),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { db } = ctx;
+      const { pageIndex, pageSize } = input;
 
-    const pengajuan = await db.pengajuan.findMany({
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        judul: true,
-        keterangan: true,
-        jumlah: true,
-        status: true,
-        kategori: { select: { id: true, name: true } },
-        diajukanOleh: { select: { id: true, name: true } },
-        Pengeluaran: { select: { id: true, name: true } },
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+      const skip = pageIndex * pageSize;
 
-    const transformedData = pengajuan.map((item) => ({
-      ...item,
-      jumlah: item.jumlah.toNumber(),
-      createdAt: item.createdAt.toISOString(),
-      updatedAt: item.updatedAt.toISOString(),
-    }));
+      const [pengajuan, totalCount] = await db.$transaction([
+        db.pengajuan.findMany({
+          skip: skip,
+          take: pageSize,
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            judul: true,
+            keterangan: true,
+            jumlah: true,
+            status: true,
+            kategori: { select: { id: true, name: true } },
+            diajukanOleh: { select: { id: true, name: true } },
+            Pengeluaran: { select: { id: true, name: true } },
+            createdAt: true,
+            updatedAt: true,
+          },
+        }),
+        db.pengajuan.count(),
+      ]);
 
-    return transformedData;
-  }),
+      const transformedData = pengajuan.map((item) => ({
+        ...item,
+        jumlah: item.jumlah.toNumber(),
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
+      }));
+
+      return { data: transformedData, totalCount };
+    }),
 
   createPengajuan: protectedProcedure
     .input(pengajuanFormSchema)

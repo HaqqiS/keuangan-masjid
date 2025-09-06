@@ -11,7 +11,8 @@ import { columns as createColumns } from "./pemasukan-columns";
 import {
   pemasukanFormSchema,
   type PemasukanFormSchema,
-  type PemasukanType,
+  // type PemasukanType,
+  type PengeluaranTypeRouter,
 } from "@/types/pemasukan.types";
 import {
   Drawer,
@@ -41,24 +42,34 @@ import { api } from "@/trpc/react";
 import { PemasukanEditDrawer } from "./pemasukan-edit-drawer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import type { PaginationState } from "@tanstack/react-table";
+import { keepPreviousData } from "@tanstack/react-query";
+import type { RouterOutputs } from "@/types";
+import Image from "next/image";
 
 interface PemasukanViewPageProps {
-  initialData: PemasukanType[]; // Menerima data sebagai prop
+  initialData: RouterOutputs["pemasukan"]["getPemasukan"];
 }
 
 export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
   const apiUtils = api.useUtils();
   const isMobile = useIsMobile();
   const [createFormPemasukanOpen, setCreateFormPemasukanOpen] = useState(false);
+  const [uploadedCreatePemasukanImageUrl, setUploadedCreatePemasukanImageUrl] =
+    useState<string | null>(null);
   const [editFormPemasukanOpen, setEditFormPemasukanOpen] = useState(false);
   const [selectedPemasukanToEdit, setSelectedPemasukanToEdit] =
-    useState<PemasukanType | null>(null);
+    useState<PengeluaranTypeRouter | null>(null);
   const [deletePemasukanDialogOpen, setDeletePemasukanDialogOpen] =
     useState(false);
   const [selectedPemasukanToDelete, setSelectedPemasukanToDelete] = useState<{
     id: string;
     name: string;
   } | null>(null);
+  const [{ pageIndex, pageSize }, setPagination] = useState<PaginationState>({
+    pageIndex: 0, // Halaman awal
+    pageSize: 10, // Default item per halaman
+  });
 
   // FORM HANDLING
   const createPemasukanForm = useForm<PemasukanFormSchema>({
@@ -76,10 +87,21 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
   });
 
   // MUTATION & QUERY
-  const { data: pemasukanData } = api.pemasukan.getPemasukan.useQuery(
-    undefined,
-    { initialData: initialData },
-  );
+
+  const { data: dataPemasukan, isLoading: isLoadingPemasukan } =
+    api.pemasukan.getPemasukan.useQuery(
+      { pageIndex, pageSize },
+      {
+        // initialData: initialData,
+        initialData:
+          pageIndex === 0 && pageSize === 10 ? initialData : undefined,
+        placeholderData: keepPreviousData,
+      },
+    );
+
+  const pageCount = dataPemasukan
+    ? Math.ceil(dataPemasukan.totalCount / pageSize)
+    : 0;
 
   const { mutate: createPemasukan, isPending: isPendingCreate } =
     api.pemasukan.createPemasukan.useMutation({
@@ -128,15 +150,23 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
 
   // HANDLERS
   const handleSubmitCreatePemasukan = (data: PemasukanFormSchema) => {
+    if (!uploadedCreatePemasukanImageUrl) {
+      toast.error("Bukti pemasukan wajib diunggah");
+      return;
+    }
+
+    console.log("STATE imageUrl", uploadedCreatePemasukanImageUrl);
+    console.log("FORM imageUrl", data.transaksiImageUrl);
     createPemasukan({
       name: data.name,
       jumlah: data.jumlah,
       keterangan: data.keterangan,
       kategoriId: data.kategoriId,
+      transaksiImageUrl: data.transaksiImageUrl,
     });
   };
 
-  const handleClickEditPemasukan = (pemasukan: PemasukanType) => {
+  const handleClickEditPemasukan = (pemasukan: PengeluaranTypeRouter) => {
     setSelectedPemasukanToEdit(pemasukan); // Simpan data pemasukan yang di-klik
     setEditFormPemasukanOpen(true); // Buka drawer-nya
 
@@ -145,6 +175,7 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
       jumlah: pemasukan.jumlah,
       keterangan: pemasukan.keterangan ?? "",
       kategoriId: pemasukan.kategori.id,
+      transaksiImageUrl: "",
     });
   };
 
@@ -240,7 +271,12 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
 
                   <div className="flex flex-col overflow-y-auto p-4">
                     <Form {...createPemasukanForm}>
-                      <PemasukanForm onSubmit={handleSubmitCreatePemasukan} />
+                      <PemasukanForm
+                        onSubmit={handleSubmitCreatePemasukan}
+                        onChangeImageUrl={(imageUrl: string) =>
+                          setUploadedCreatePemasukanImageUrl(imageUrl)
+                        }
+                      />
                     </Form>
                   </div>
 
@@ -273,7 +309,12 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
                   </AlertDialogHeader>
 
                   <Form {...createPemasukanForm}>
-                    <PemasukanForm onSubmit={handleSubmitCreatePemasukan} />
+                    <PemasukanForm
+                      onSubmit={handleSubmitCreatePemasukan}
+                      onChangeImageUrl={(imageUrl: string) =>
+                        setUploadedCreatePemasukanImageUrl(imageUrl)
+                      }
+                    />
                   </Form>
 
                   <AlertDialogFooter>
@@ -293,7 +334,14 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
           </div>
         </DashboardHeader>
 
-        <DataTable data={pemasukanData} columns={columns} />
+        <DataTable
+          data={dataPemasukan?.data ?? []}
+          columns={columns}
+          pageCount={pageCount}
+          pagination={{ pageIndex, pageSize }}
+          onPaginationChange={setPagination}
+          // isLoading={isLoadingPemasukan}
+        />
       </div>
     </>
   );

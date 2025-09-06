@@ -2,16 +2,23 @@
 import { columns as createColumns } from "@/app/_components/views/dashboard/dashboard-column";
 import { DataTable } from "../../shared/data-table-generic";
 import { api } from "@/trpc/react";
-import type { PengajuanTypeRouter } from "@/types/pengajuan.type";
 import { useSession } from "next-auth/react";
+import type { RouterOutputs } from "@/types";
+import { useState } from "react";
+import type { PaginationState } from "@tanstack/react-table";
 
 interface DashboardPageViewProps {
-  initialData: PengajuanTypeRouter[];
+  initialData: RouterOutputs["dashboard"]["getPengajuan"];
 }
 
 export default function DashboardPageView({
   initialData,
 }: DashboardPageViewProps) {
+  const [{ pageIndex, pageSize }, setPagination] = useState<PaginationState>({
+    pageIndex: 0, // Halaman awal
+    pageSize: 10, // Default item per halaman
+  });
+
   const session = useSession();
   const userRole = session.data?.user.role;
 
@@ -28,14 +35,21 @@ export default function DashboardPageView({
     role: userRole,
   });
 
-  const { data: dataPengajuan } = api.pengajuan.getPengajuan.useQuery(
+  const { data: dataPengajuan } = api.dashboard.getPengajuan.useQuery(
     undefined,
-    { initialData },
+    { initialData: initialData },
   );
+  const pageCount = 1;
 
   return (
     <>
-      <DataTable data={dataPengajuan} columns={columns} />
+      <DataTable
+        data={dataPengajuan}
+        columns={columns}
+        onPaginationChange={setPagination}
+        pageCount={pageCount}
+        pagination={{ pageIndex, pageSize }}
+      />
     </>
   );
 }

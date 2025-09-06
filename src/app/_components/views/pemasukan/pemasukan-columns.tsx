@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useSortable } from "@dnd-kit/sortable";
-import { IconDotsVertical, IconGripVertical } from "@tabler/icons-react";
+import { IconDotsVertical } from "@tabler/icons-react";
 import { type ColumnDef } from "@tanstack/react-table";
 
 import { Badge } from "@/components/ui/badge";
@@ -15,28 +14,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toRupiah } from "@/utils/toRupiah";
-import type { PemasukanType } from "@/types/pemasukan.types";
+import type { PengeluaranTypeRouter } from "@/types/pemasukan.types";
 import { dateFormatter } from "@/utils/dateFormatter";
-
-// Create a separate component for the drag handle
-function DragHandle({ id }: { id: string }) {
-  const { attributes, listeners } = useSortable({
-    id,
-  });
-
-  return (
-    <Button
-      {...attributes}
-      {...listeners}
-      variant="ghost"
-      size="icon"
-      className="text-muted-foreground size-7 hover:bg-transparent"
-    >
-      <IconGripVertical className="text-muted-foreground size-3" />
-      <span className="sr-only">Drag to reorder</span>
-    </Button>
-  );
-}
+import Image from "next/image";
 
 // export const columns: ColumnDef<z.infer<typeof schema>>[] = [
 // export const columns: ColumnDef<PemasukanType>[] = [
@@ -44,19 +24,14 @@ export const columns = ({
   onEditClick,
   onDeleteClick,
 }: {
-  onEditClick: (item: PemasukanType) => void;
+  onEditClick: (item: PengeluaranTypeRouter) => void;
   onDeleteClick: (pemasukanId: string, pemasukanName: string) => void;
-}): ColumnDef<PemasukanType>[] => [
-  {
-    id: "drag",
-    header: () => null,
-    cell: ({ row }) => <DragHandle id={row.original.id} />,
-  },
+}): ColumnDef<PengeluaranTypeRouter>[] => [
   {
     id: "number",
-    header: () => (
-      <div className="text-muted-foreground w-full text-center">No</div>
-    ),
+    header: () =>
+      // <div className="text-muted-foreground w-full text-center">No</div>
+      null,
 
     cell: ({ row }) => {
       return (
@@ -119,6 +94,23 @@ export const columns = ({
     header: "Dibuat oleh",
     cell: ({ row }) => {
       return row.original.createdBy.name;
+    },
+  },
+  {
+    accessorKey: "transaksiImageUrl",
+    header: "Bukti Transaksi",
+    cell: ({ row }) => {
+      return row.original.transaksiImageUrl ? (
+        <Image
+          src={row.original.transaksiImageUrl}
+          alt="Bukti Transaksi"
+          width={50}
+          height={50}
+          className="rounded-md"
+        />
+      ) : (
+        <div className="text-muted-foreground">Tidak ada bukti</div>
+      );
     },
   },
   {

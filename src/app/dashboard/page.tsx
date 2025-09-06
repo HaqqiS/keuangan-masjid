@@ -6,7 +6,7 @@ import { api } from "@/trpc/server";
 // import { DataTable } from "../_components/shared/data-table-generic";
 
 export default async function DashboardPage() {
-  const dataPengajuan = await api.pengajuan.getPengajuan();
+  const dataPengajuan = await api.dashboard.getPengajuan();
 
   return (
     <>

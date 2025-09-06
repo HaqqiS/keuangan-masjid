@@ -105,7 +105,11 @@ export default function LoginForm() {
                 <FormMessage>{fieldState.error?.message}</FormMessage>
               )}
             />
-            <Button type="submit" className="w-full">
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loginForm.formState.isSubmitting}
+            >
               Login
             </Button>
           </div>

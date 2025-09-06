@@ -1,12 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { useSortable } from "@dnd-kit/sortable";
 import {
   IconCircleCheckFilled,
   IconCircleXFilled,
   IconDotsVertical,
-  IconGripVertical,
   IconLoader,
 } from "@tabler/icons-react";
 import { type ColumnDef } from "@tanstack/react-table";
@@ -33,26 +31,6 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
-// Create a separate component for the drag handle
-function DragHandle({ id }: { id: string }) {
-  const { attributes, listeners } = useSortable({
-    id,
-  });
-
-  return (
-    <Button
-      {...attributes}
-      {...listeners}
-      variant="ghost"
-      size="icon"
-      className="text-muted-foreground size-7 hover:bg-transparent"
-    >
-      <IconGripVertical className="text-muted-foreground size-3" />
-      <span className="sr-only">Drag to reorder</span>
-    </Button>
-  );
-}
-
 export const columns = ({
   onEditClick,
   onDeleteClick,
@@ -67,15 +45,10 @@ export const columns = ({
   role: UserRole | undefined;
 }): ColumnDef<PengajuanTypeRouter>[] => [
   {
-    id: "drag",
-    header: () => null,
-    cell: ({ row }) => <DragHandle id={row.original.id} />,
-  },
-  {
     id: "number",
-    header: () => (
-      <div className="text-muted-foreground w-full text-center">No</div>
-    ),
+    header: () =>
+      // <div className="text-muted-foreground w-full text-center">No</div>
+      null,
 
     cell: ({ row }) => {
       return (
