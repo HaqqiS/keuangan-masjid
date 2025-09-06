@@ -1,6 +1,6 @@
 import z from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { pemasukanFormSchema } from "@/types/pemasukan.types";
+import { serverPemasukanFormSchema } from "@/types/pemasukan.types";
 import { fileRouter } from "./file.router";
 import { Bucket } from "@/server/bucket";
 
@@ -67,7 +67,7 @@ export const pemasukanRouter = createTRPCRouter({
       //   jumlah: z.number().min(0, "Jumlah tidak boleh negatif"),
       //   kategoriId: z.string().min(1, "Kategori tidak boleh kosong"),
       // }),
-      pemasukanFormSchema,
+      serverPemasukanFormSchema,
     )
     .mutation(async ({ ctx, input }) => {
       const { db } = ctx;
@@ -104,7 +104,7 @@ export const pemasukanRouter = createTRPCRouter({
           .slice(urlParts.indexOf(Bucket.ImageTransaction) + 1)
           .join("/");
 
-        console.log("Path Image to Delete di Router:", imagePath);
+        // console.log("Path Image to Delete di Router:", imagePath);
 
         // 2. Buat "caller" untuk fileRouter
         const fileCaller = fileRouter.createCaller(ctx);
@@ -121,7 +121,7 @@ export const pemasukanRouter = createTRPCRouter({
     }),
 
   updatePemasukan: protectedProcedure
-    .input(pemasukanFormSchema.extend({ id: z.string().uuid() }))
+    .input(serverPemasukanFormSchema.extend({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const { db } = ctx;
 
@@ -132,6 +132,7 @@ export const pemasukanRouter = createTRPCRouter({
           keterangan: input.keterangan,
           jumlah: input.jumlah,
           kategoriId: input.kategoriId,
+          transaksiImageUrl: input.transaksiImageUrl,
         },
       });
 

@@ -41,7 +41,7 @@ export const fileRouter = createTRPCRouter({
   deleteImage: protectedProcedure
     .input(z.string())
     .mutation(async ({ input }) => {
-      console.log("Path Image to Delete", input);
+      // console.log("Path Image to Delete", input);
 
       const { data, error } = await supabaseAdmin.storage
         .from(Bucket.ImageTransaction)

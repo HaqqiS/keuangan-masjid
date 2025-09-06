@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   FormControl,
   FormDescription,
@@ -21,73 +19,137 @@ import { Textarea } from "@/components/ui/textarea";
 import { uploadFileToSignedUrl } from "@/lib/supabase";
 import { Bucket } from "@/server/bucket";
 import { api } from "@/trpc/react";
-import type { PemasukanFormSchema } from "@/types/pemasukan.types";
+import type { ClientPemasukanFormSchema } from "@/types/pemasukan.types";
 import { TypeKategori } from "@prisma/client";
 import Image from "next/image";
-import type { ChangeEvent } from "react";
+import { useMemo, type ChangeEvent } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 
 type PemasukanFormProps = {
-  onSubmit: (data: PemasukanFormSchema) => void;
-  onChangeImageUrl: (imageUrl: string) => void;
+  onSubmit: (data: ClientPemasukanFormSchema) => void;
 };
 
-export default function PemasukanForm({
-  onSubmit,
-  onChangeImageUrl,
-}: PemasukanFormProps) {
-  const form = useFormContext<PemasukanFormSchema>();
+export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
+  const form = useFormContext<ClientPemasukanFormSchema>();
 
   const { data: kategoris } = api.kategori.getKategori.useQuery({
     type: TypeKategori.PEMASUKAN,
   });
-  const {
-    mutateAsync: createImagePresignedUrl,
-    isPending: isPendingCreateImage,
-  } = api.file.createImagePresignedUrl.useMutation();
+  // const {
+  //   mutateAsync: createImagePresignedUrl,
+  //   isPending: isPendingCreateImage,
+  // } = api.file.createImagePresignedUrl.useMutation();
+  // const { mutateAsync: deleteImage } = api.file.deleteImage.useMutation();
 
-  const imageChangeHandler = async (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      const file = files[0];
+  // const imageChangeHandler = async (e: ChangeEvent<HTMLInputElement>) => {
+  //   const files = e.target.files;
+  //   if (files && files.length > 0) {
+  //     const file = files[0];
 
-      if (!file) return;
+  //     if (!file) return;
 
-      const uploadPromise = async (): Promise<string> => {
-        const { path, token } = await createImagePresignedUrl({
-          originalFilename: file.name,
-          context: "pemasukan",
-        });
+  //     // 1. Validasi Ukuran File (contoh: maksimal 5MB)
+  //     const MAX_FILE_SIZE_MB = 10;
+  //     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+  //       toast.error(`Ukuran file tidak boleh melebihi ${MAX_FILE_SIZE_MB}MB.`);
+  //       e.target.value = ""; // Penting: Reset input file agar pengguna bisa memilih file lain
+  //       return; // Hentikan eksekusi fungsi
+  //     }
 
-        const imageUrl = await uploadFileToSignedUrl({
-          file,
-          path,
-          token,
-          bucket: Bucket.ImageTransaction,
-        });
+  //     // 2. Validasi Tipe File
+  //     const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+  //     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+  //       toast.error(
+  //         "Format file tidak valid. Harap unggah JPG, PNG, atau WebP.",
+  //       );
+  //       e.target.value = ""; // Reset input file
+  //       return; // Hentikan eksekusi fungsi
+  //     }
 
-        form.setValue("transaksiImageUrl", imageUrl, {
-          shouldValidate: true,
-        });
+  //     const oldImageUrl = form.getValues("transaksiImageUrl");
 
-        // Cukup kembalikan hasilnya. Ini akan menjadi nilai `resolve` dari promise.
-        return imageUrl;
-      };
+  //     const uploadPromise = async (): Promise<string> => {
+  //       if (oldImageUrl) {
+  //         try {
+  //           // Ekstrak path dari URL lengkap Supabase
+  //           const urlParts = oldImageUrl.split("/");
+  //           const imagePath = urlParts
+  //             .slice(urlParts.indexOf(Bucket.ImageTransaction) + 1)
+  //             .join("/");
 
-      onChangeImageUrl(await uploadPromise());
+  //           // console.log("Menghapus gambar lama di path:", imagePath);
+  //           await deleteImage(imagePath);
+  //         } catch (error) {
+  //           console.error(
+  //             "Gagal menghapus gambar lama, proses dihentikan:",
+  //             error,
+  //           );
+  //           // Lemparkan error agar toast.promise menampilkannya dan menghentikan proses
+  //           throw new Error("Gagal menghapus gambar lama.");
+  //         }
+  //       }
 
-      toast.promise(uploadPromise(), {
-        loading: "Mengunggah gambar...",
-        success: "Gambar berhasil diunggah!",
-        error: (err: any) => err.message ?? "Gagal mengunggah gambar.",
-      });
+  //       const { path, token } = await createImagePresignedUrl({
+  //         originalFilename: file.name,
+  //         context: "pemasukan",
+  //       });
+
+  //       const newImageUrl = await uploadFileToSignedUrl({
+  //         file,
+  //         path,
+  //         token,
+  //         bucket: Bucket.ImageTransaction,
+  //       });
+
+  //       form.setValue("transaksiImageUrl", newImageUrl, {
+  //         shouldValidate: true,
+  //       });
+
+  //       return newImageUrl;
+  //     };
+
+  //     toast.promise(uploadPromise(), {
+  //       loading: "Mengunggah gambar...",
+  //       success: "Gambar berhasil diunggah!",
+  //       error: (err: any) => err.message ?? "Gagal mengunggah gambar.",
+  //     });
+  //   }
+  // };
+
+  const transaksiImageValue = form.watch("transaksiImage");
+
+  const previewUrl = useMemo(() => {
+    if (typeof transaksiImageValue === "string") {
+      return transaksiImageValue; // Jika string, itu adalah URL yang sudah ada
     }
+    if (transaksiImageValue instanceof File) {
+      return URL.createObjectURL(transaksiImageValue); // Jika File, buat URL preview
+    }
+    return null; // Jika kosong
+  }, [transaksiImageValue]);
+
+  const imageChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const MAX_FILE_SIZE_MB = 10;
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      toast.error(`Ukuran file tidak boleh melebihi ${MAX_FILE_SIZE_MB}MB.`);
+      e.target.value = ""; // Penting: Reset input agar user bisa memilih file lagi
+      return; // Hentikan proses
+    }
+
+    const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      toast.error("Format file harus JPG, PNG, atau WebP.");
+      e.target.value = ""; // Reset input
+      return; // Hentikan proses
+    }
+
+    // Langsung simpan objek File ke dalam state form
+    form.setValue("transaksiImage", file, { shouldValidate: true });
   };
-
-  const imageUrl = form.watch("transaksiImageUrl");
-
-  console.log("rendering form with imageUrl:", form.watch("transaksiImageUrl"));
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -183,9 +245,9 @@ export default function PemasukanForm({
         <div className="grid gap-3">
           <FormField
             control={form.control}
-            name="transaksiImageUrl"
-            disabled={isPendingCreateImage}
-            render={(field) => (
+            name="transaksiImage"
+            // disabled={isPendingCreateImage}
+            render={() => (
               // Kita ubah `field` menjadi `_` karena kita handle onChange manual
               <FormItem>
                 <FormLabel>Upload Gambar Transaksi</FormLabel>
@@ -205,8 +267,17 @@ export default function PemasukanForm({
             )}
           />
 
-          {/* Tampilkan preview jika imageUrl sudah ada */}
-          {imageUrl && (
+          {previewUrl && (
+            <div className="relative mt-2 h-96 w-full rounded-md border md:h-48">
+              <Image
+                src={previewUrl}
+                alt="Preview"
+                fill
+                className="rounded-md object-cover"
+              />
+            </div>
+          )}
+          {/* {imageUrl && (
             <div className="relative mt-2 h-96 w-full rounded-md border md:h-48">
               <Image
                 src={imageUrl}
@@ -215,7 +286,7 @@ export default function PemasukanForm({
                 className="rounded-md object-cover"
               />
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </form>

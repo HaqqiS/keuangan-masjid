@@ -9,10 +9,10 @@ import {
 import { DataTable } from "../../shared/data-table-generic";
 import { columns as createColumns } from "./pemasukan-columns";
 import {
-  pemasukanFormSchema,
-  type PemasukanFormSchema,
+  clientPemasukanFormSchema,
+  type ClientPemasukanFormSchema,
   // type PemasukanType,
-  type PengeluaranTypeRouter,
+  type PemasukanTypeRouter,
 } from "@/types/pemasukan.types";
 import {
   Drawer,
@@ -45,7 +45,8 @@ import { toast } from "sonner";
 import type { PaginationState } from "@tanstack/react-table";
 import { keepPreviousData } from "@tanstack/react-query";
 import type { RouterOutputs } from "@/types";
-import Image from "next/image";
+import { uploadFileToSignedUrl } from "@/lib/supabase";
+import { Bucket } from "@/server/bucket";
 
 interface PemasukanViewPageProps {
   initialData: RouterOutputs["pemasukan"]["getPemasukan"];
@@ -55,14 +56,9 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
   const apiUtils = api.useUtils();
   const isMobile = useIsMobile();
   const [createFormPemasukanOpen, setCreateFormPemasukanOpen] = useState(false);
-  const [uploadedCreatePemasukanImageUrl, setUploadedCreatePemasukanImageUrl] =
-    useState<string | null>(null);
   const [editFormPemasukanOpen, setEditFormPemasukanOpen] = useState(false);
   const [selectedPemasukanToEdit, setSelectedPemasukanToEdit] =
-    useState<PengeluaranTypeRouter | null>(null);
-  const [uploadedEditPemasukanImageUrl, setUploadedEditPemasukanImageUrl] =
-    useState<string | null>(null);
-
+    useState<PemasukanTypeRouter | null>(null);
   const [deletePemasukanDialogOpen, setDeletePemasukanDialogOpen] =
     useState(false);
   const [selectedPemasukanToDelete, setSelectedPemasukanToDelete] = useState<{
@@ -75,8 +71,8 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
   });
 
   // FORM HANDLING
-  const createPemasukanForm = useForm<PemasukanFormSchema>({
-    resolver: zodResolver(pemasukanFormSchema),
+  const createPemasukanForm = useForm<ClientPemasukanFormSchema>({
+    resolver: zodResolver(clientPemasukanFormSchema),
     defaultValues: {
       name: "",
       jumlah: 0,
@@ -85,8 +81,8 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
     },
   });
 
-  const editPemasukanForm = useForm<PemasukanFormSchema>({
-    resolver: zodResolver(pemasukanFormSchema),
+  const editPemasukanForm = useForm<ClientPemasukanFormSchema>({
+    resolver: zodResolver(clientPemasukanFormSchema),
   });
 
   // MUTATION & QUERY
@@ -106,13 +102,12 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
     ? Math.ceil(dataPemasukan.totalCount / pageSize)
     : 0;
 
-  const { mutate: createPemasukan, isPending: isPendingCreate } =
+  const { mutateAsync: createPemasukan, isPending: isPendingCreate } =
     api.pemasukan.createPemasukan.useMutation({
       onSuccess: async () => {
         await apiUtils.pemasukan.getPemasukan.invalidate();
         createPemasukanForm.reset();
         setCreateFormPemasukanOpen(false);
-        toast.success("Pemasukan berhasil dibuat");
       },
       onError: (error) => {
         toast.error("Pemasukan gagal ditambahkan", {
@@ -121,11 +116,10 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
       },
     });
 
-  const { mutate: updatePemasukan, isPending: isPendingUpdate } =
+  const { mutateAsync: updatePemasukan, isPending: isPendingUpdate } =
     api.pemasukan.updatePemasukan.useMutation({
       onSuccess: async () => {
         await apiUtils.pemasukan.getPemasukan.invalidate();
-        toast.success("Pemasukan berhasil diperbarui");
         setEditFormPemasukanOpen(false);
         editPemasukanForm.reset();
       },
@@ -151,23 +145,55 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
       },
     });
 
+  const { mutateAsync: createImagePresignedUrl } =
+    api.file.createImagePresignedUrl.useMutation();
+  const { mutateAsync: deleteImage } = api.file.deleteImage.useMutation();
+
   // HANDLERS
-  const handleSubmitCreatePemasukan = (data: PemasukanFormSchema) => {
-    if (!uploadedCreatePemasukanImageUrl) {
-      toast.error("Bukti pemasukan wajib diunggah");
+  const handleFileUpload = async (file: File): Promise<string> => {
+    const presignedData = await createImagePresignedUrl({
+      originalFilename: file.name,
+      context: "pemasukan",
+    });
+
+    const publicUrl = await uploadFileToSignedUrl({
+      file,
+      path: presignedData.path,
+      token: presignedData.token,
+      bucket: Bucket.ImageTransaction,
+    });
+
+    return publicUrl;
+  };
+
+  const handleSubmitCreatePemasukan = async (
+    data: ClientPemasukanFormSchema,
+  ) => {
+    if (!(data.transaksiImage instanceof File)) {
+      toast.error("Anda harus mengunggah gambar bukti transaksi.");
       return;
     }
 
-    createPemasukan({
-      name: data.name,
-      jumlah: data.jumlah,
-      keterangan: data.keterangan,
-      kategoriId: data.kategoriId,
-      transaksiImageUrl: data.transaksiImageUrl,
+    const promise = async () => {
+      const publicUrl = await handleFileUpload(data.transaksiImage as File);
+      await createPemasukan({
+        name: data.name,
+        jumlah: data.jumlah,
+        keterangan: data.keterangan,
+        kategoriId: data.kategoriId,
+        transaksiImageUrl: publicUrl,
+      });
+    };
+
+    toast.promise(promise(), {
+      loading: "Menyimpan data...",
+      success: "Pemasukan berhasil dibuat!",
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+      error: (err: any) => err.message ?? "Gagal membuat pemasukan.",
     });
   };
 
-  const handleClickEditPemasukan = (pemasukan: PengeluaranTypeRouter) => {
+  const handleClickEditPemasukan = (pemasukan: PemasukanTypeRouter) => {
     setSelectedPemasukanToEdit(pemasukan); // Simpan data pemasukan yang di-klik
     setEditFormPemasukanOpen(true); // Buka drawer-nya
 
@@ -176,14 +202,46 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
       jumlah: pemasukan.jumlah,
       keterangan: pemasukan.keterangan ?? "",
       kategoriId: pemasukan.kategori.id,
-      transaksiImageUrl: pemasukan.transaksiImageUrl ?? "",
+      transaksiImage: pemasukan.transaksiImageUrl ?? "",
     });
   };
 
-  const handleSubmitEditPemasukan = (data: PemasukanFormSchema) => {
+  const handleSubmitEditPemasukan = async (data: ClientPemasukanFormSchema) => {
     if (!selectedPemasukanToEdit) return;
 
-    updatePemasukan({ id: selectedPemasukanToEdit.id, ...data });
+    // --- 2. KONSISTENSI: Menggunakan toast.promise untuk edit ---
+    const promise = async () => {
+      let finalImageUrl = selectedPemasukanToEdit.transaksiImageUrl;
+
+      if (data.transaksiImage instanceof File) {
+        // Hapus gambar lama jika ada
+        if (selectedPemasukanToEdit.transaksiImageUrl) {
+          const oldPath = selectedPemasukanToEdit.transaksiImageUrl
+            .split("/")
+            .slice(-2)
+            .join("/");
+          await deleteImage(oldPath);
+        }
+        // Unggah gambar baru menggunakan helper
+        finalImageUrl = await handleFileUpload(data.transaksiImage);
+      }
+
+      await updatePemasukan({
+        id: selectedPemasukanToEdit.id,
+        name: data.name,
+        jumlah: data.jumlah,
+        keterangan: data.keterangan,
+        kategoriId: data.kategoriId,
+        transaksiImageUrl: finalImageUrl ?? "",
+      });
+    };
+
+    toast.promise(promise(), {
+      loading: "Memperbarui data...",
+      success: "Pemasukan berhasil diperbarui!",
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+      error: (err: any) => err.message ?? "Gagal memperbarui pemasukan.",
+    });
   };
 
   const handleClickDeletePemasukan = (
@@ -213,8 +271,6 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
           form={editPemasukanForm}
           handleSubmitEditPemasukan={handleSubmitEditPemasukan}
           isPending={isPendingUpdate}
-          uploadedEditPemasukanImageUrl={uploadedEditPemasukanImageUrl}
-          setUploadedEditPemasukanImageUrl={setUploadedEditPemasukanImageUrl}
         />
       )}
 
@@ -273,12 +329,7 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
 
                   <div className="flex flex-col overflow-y-auto p-4">
                     <Form {...createPemasukanForm}>
-                      <PemasukanForm
-                        onSubmit={handleSubmitCreatePemasukan}
-                        onChangeImageUrl={(imageUrl: string) =>
-                          setUploadedCreatePemasukanImageUrl(imageUrl)
-                        }
-                      />
+                      <PemasukanForm onSubmit={handleSubmitCreatePemasukan} />
                     </Form>
                   </div>
 
@@ -311,12 +362,7 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
                   </AlertDialogHeader>
 
                   <Form {...createPemasukanForm}>
-                    <PemasukanForm
-                      onSubmit={handleSubmitCreatePemasukan}
-                      onChangeImageUrl={(imageUrl: string) =>
-                        setUploadedCreatePemasukanImageUrl(imageUrl)
-                      }
-                    />
+                    <PemasukanForm onSubmit={handleSubmitCreatePemasukan} />
                   </Form>
 
                   <AlertDialogFooter>

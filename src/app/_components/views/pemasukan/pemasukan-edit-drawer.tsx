@@ -11,11 +11,10 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import type { PemasukanFormSchema } from "@/types/pemasukan.types";
+import type { ClientPemasukanFormSchema } from "@/types/pemasukan.types";
 import PemasukanForm from "./pemasukan-form";
 import { Form } from "@/components/ui/form";
 import { type useForm } from "react-hook-form";
-import { useState } from "react";
 
 // export function PemasukanEditDrawer
 // ({ item }: { item: z.infer<typeof schema> }) {
@@ -25,17 +24,13 @@ export function PemasukanEditDrawer({
   form,
   handleSubmitEditPemasukan,
   isPending,
-  uploadedEditPemasukanImageUrl,
-  setUploadedEditPemasukanImageUrl,
   // children,
 }: {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  form: ReturnType<typeof useForm<PemasukanFormSchema>>;
-  handleSubmitEditPemasukan: (data: PemasukanFormSchema) => void;
+  form: ReturnType<typeof useForm<ClientPemasukanFormSchema>>;
+  handleSubmitEditPemasukan: (data: ClientPemasukanFormSchema) => void;
   isPending: boolean;
-  uploadedEditPemasukanImageUrl: string | null;
-  setUploadedEditPemasukanImageUrl: (imageUrl: string | null) => void;
   // children?: ReactNode;
 }) {
   const isMobile = useIsMobile();
@@ -53,12 +48,7 @@ export function PemasukanEditDrawer({
         </DrawerHeader>
         <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
           <Form {...form}>
-            <PemasukanForm
-              onSubmit={handleSubmitEditPemasukan}
-              onChangeImageUrl={(imageUrl: string) =>
-                setUploadedEditPemasukanImageUrl(imageUrl)
-              }
-            />
+            <PemasukanForm onSubmit={handleSubmitEditPemasukan} />
           </Form>
           {/* {children} */}
         </div>
