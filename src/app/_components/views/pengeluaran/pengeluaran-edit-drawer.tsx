@@ -11,7 +11,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import type { EditPengeluaranFormSchema } from "@/types/pengeluaran.type";
+import type { ClientPengeluaranFormSchema } from "@/types/pengeluaran.type";
 import PengeluaranEditForm from "./pengeluaran-edit-form";
 import { Form } from "@/components/ui/form";
 import { type useForm } from "react-hook-form";
@@ -26,8 +26,8 @@ export function PengeluaranEditDrawer({
 }: {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  form: ReturnType<typeof useForm<EditPengeluaranFormSchema>>;
-  handleSubmitEditPengeluaran: (data: EditPengeluaranFormSchema) => void;
+  form: ReturnType<typeof useForm<ClientPengeluaranFormSchema>>;
+  handleSubmitEditPengeluaran: (data: ClientPengeluaranFormSchema) => void;
   isPending: boolean;
   // children?: ReactNode;
 }) {

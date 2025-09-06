@@ -121,13 +121,12 @@ export default function PengeluaranPageView({
       },
     });
 
-  const { mutate: updatePengeluaran, isPending: isPendingUpdate } =
+  const { mutateAsync: updatePengeluaran, isPending: isPendingUpdate } =
     api.pengeluaran.updatePengeluaran.useMutation({
       onSuccess: async () => {
         await apiUtils.pengeluaran.getPengeluaran.invalidate();
         setEditFormPengeluaranOpen(false);
         setSelectedPengeluaranToEdit(null);
-        toast.success("Pengeluaran berhasil diperbarui");
       },
       onError: (error) => {
         toast.error("Pengeluaran gagal diperbarui", {
@@ -209,12 +208,51 @@ export default function PengeluaranPageView({
       keterangan: pengeluaran.keterangan ?? "",
       kategoriId: pengeluaran.kategori.id,
       pengajuanId: pengeluaran.pengajuan?.id,
+      transaksiImage: pengeluaran.transaksiImageUrl,
     });
   };
 
   const handleSubmitEditPengeluaran = (data: ClientPengeluaranFormSchema) => {
     if (!selectedPengeluaranToEdit) return;
-    updatePengeluaran({ id: selectedPengeluaranToEdit.id, ...data });
+
+    const promise = async () => {
+      let finalImageUrl = selectedPengeluaranToEdit.transaksiImageUrl;
+
+      if (data.transaksiImage instanceof File) {
+        // Hapus gambar lama jika ada
+        if (selectedPengeluaranToEdit.transaksiImageUrl) {
+          const oldPath = selectedPengeluaranToEdit.transaksiImageUrl
+            .split("/")
+            .slice(-2)
+            .join("/");
+          await deleteImage(oldPath);
+        }
+        // Unggah gambar baru menggunakan helper
+        finalImageUrl = await handleFileUpload(data.transaksiImage);
+
+        await updatePengeluaran({
+          id: selectedPengeluaranToEdit.id,
+          transaksiImageUrl: finalImageUrl,
+          ...data,
+        });
+      }
+    };
+
+    toast.promise(promise(), {
+      loading: "Memperbarui data...",
+      success: "Pengeluaran berhasil diperbarui!",
+      error: (err: unknown) => {
+        // 1. Cek apakah 'err' adalah instance dari kelas Error
+        //    (TRPCError juga merupakan turunan dari Error, jadi ini akan berfungsi)
+        if (err instanceof Error) {
+          // Jika ya, TypeScript sekarang tahu bahwa `err.message` pasti ada
+          return err.message;
+        }
+
+        // 2. Jika bukan, berikan pesan error default yang aman
+        return "Gagal membuat pengeluaran: Terjadi kesalahan tidak dikenal.";
+      },
+    });
   };
 
   const columns = createColumns({

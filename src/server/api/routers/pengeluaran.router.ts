@@ -139,6 +139,7 @@ export const pengeluaranRouter = createTRPCRouter({
           keterangan: input.keterangan,
           kategoriId: input.kategoriId,
           pengajuanId: input.pengajuanId ?? null,
+          transaksiImageUrl: input.transaksiImageUrl,
         },
       });
 
