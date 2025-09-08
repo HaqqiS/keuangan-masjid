@@ -50,6 +50,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import z from "zod";
 
 // Tipe props yang generik
 interface DataTableProps<TData, TValue> {
@@ -59,6 +60,16 @@ interface DataTableProps<TData, TValue> {
   pagination: PaginationState;
   onPaginationChange: OnChangeFn<PaginationState>;
 }
+
+export const schema = z.object({
+  id: z.number(),
+  header: z.string(),
+  type: z.string(),
+  status: z.string(),
+  target: z.string(),
+  limit: z.string(),
+  reviewer: z.string(),
+});
 
 export function DataTable<TData, TValue>({
   columns,

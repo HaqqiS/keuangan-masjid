@@ -31,8 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { type schema } from "./data-table";
 import { TableCellViewer } from "./data-table-cell-viewer";
+import type { schema } from "../shared/data-table-generic";
 
 // Create a separate component for the drag handle
 function DragHandle({ id }: { id: number }) {

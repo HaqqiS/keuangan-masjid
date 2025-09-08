@@ -7,8 +7,8 @@ export const pengajuanRouter = createTRPCRouter({
   getPengajuan: protectedProcedure
     .input(
       z.object({
-        pageSize: z.number().default(10),
-        pageIndex: z.number().default(0),
+        pageSize: z.number(),
+        pageIndex: z.number(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -105,19 +105,6 @@ export const pengajuanRouter = createTRPCRouter({
         where: { id: input.id },
         data: { status: input.status },
       });
-
-      if (result.status === StatusPengajuan.APPROVED) {
-        await db.pengeluaran.create({
-          data: {
-            name: result.judul,
-            jumlah: result.jumlah,
-            keterangan: result.keterangan,
-            pengajuanId: result.id,
-            kategoriId: result.kategoriId,
-            createdById: ctx.session.user.id,
-          },
-        });
-      }
 
       return result;
     }),

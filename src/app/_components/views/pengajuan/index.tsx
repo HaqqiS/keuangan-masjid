@@ -40,11 +40,19 @@ import PengajuanForm from "./pengajuan-form";
 import { toast } from "sonner";
 import { useState } from "react";
 import { PengajuanEditDrawer } from "./pengajuna-edit-drawer";
-import { StatusPengajuan, UserRole } from "@prisma/client";
+import { StatusPengajuan } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import type { RouterOutputs } from "@/types";
 import { keepPreviousData } from "@tanstack/react-query";
 import type { PaginationState } from "@tanstack/react-table";
+import {
+  clientPengeluaranFormSchema,
+  type ClientPengeluaranFormSchema,
+  type PengeluaranTypeRouter,
+} from "@/types/pengeluaran.type";
+import PengeluaranCreateForm from "../pengeluaran/pengeluaran-create-form";
+import { uploadFileToSignedUrl } from "@/lib/supabase";
+import { Bucket, FolderBucket } from "@/server/bucket";
 
 interface PengajuanPageViewProps {
   initialData: RouterOutputs["pengajuan"]["getPengajuan"];
@@ -69,6 +77,10 @@ export default function PengajuanPageView({
   const [editFormPengajuanOpen, setEditFormPengajuanOpen] = useState(false);
   const [selectedPengajuanToEdit, setSelectedPengajuanToEdit] =
     useState<PengajuanTypeRouter | null>(null);
+  const [createFormPengeluaranOpen, setCreateFormPengeluaranOpen] =
+    useState(false);
+  const [pengeluaranToCreate, setPengeluaranToCreate] =
+    useState<ClientPengeluaranFormSchema | null>(null);
   const [{ pageIndex, pageSize }, setPagination] = useState<PaginationState>({
     pageIndex: 0, // Halaman awal
     pageSize: 10, // Default item per halaman
@@ -87,6 +99,10 @@ export default function PengajuanPageView({
 
   const editPengajuanForm = useForm<PengajuanFormSchema>({
     resolver: zodResolver(pengajuanFormSchema),
+  });
+
+  const createPengeluaranForm = useForm<ClientPengeluaranFormSchema>({
+    resolver: zodResolver(clientPengeluaranFormSchema),
   });
 
   // QUERIES MUTATIONS
@@ -142,8 +158,21 @@ export default function PengajuanPageView({
         await apiUtils.pengajuan.getPengajuan.invalidate();
         toast.success("Status pengajuan berhasil diperbarui");
         if (result?.status === StatusPengajuan.APPROVED) {
-          await apiUtils.pengeluaran.getPengeluaran.invalidate();
-          toast.success("Pengeluaran berhasil ditambahkan");
+          setCreateFormPengeluaranOpen(true);
+          setPengeluaranToCreate({
+            name: result.judul,
+            jumlah: Number(result.jumlah),
+            keterangan: result.keterangan ?? "",
+            kategoriId: result.kategoriId,
+            pengajuanId: result.id,
+          });
+          createPengeluaranForm.reset({
+            name: result.judul,
+            jumlah: Number(result.jumlah),
+            keterangan: result.keterangan ?? undefined,
+            kategoriId: result.kategoriId,
+            pengajuanId: result.id,
+          });
         }
       },
       onError: (error) => {
@@ -152,6 +181,24 @@ export default function PengajuanPageView({
         });
       },
     });
+
+  const {
+    mutateAsync: createPengeluaran,
+    isPending: isPendingCreatePengeluaran,
+  } = api.pengeluaran.createPengeluaran.useMutation({
+    onSuccess: async () => {
+      setCreateFormPengeluaranOpen(false);
+      setPengeluaranToCreate(null);
+      createPengeluaranForm.reset();
+      await apiUtils.pengeluaran.getPengeluaran.invalidate();
+    },
+    onError: (error) => {
+      toast.error("Pengeluaran gagal dibuat", { description: error.message });
+    },
+  });
+
+  const { mutateAsync: createImagePresignedUrl } =
+    api.file.createImagePresignedUrl.useMutation();
 
   // HANDLERS
   const handleSubmitCreatePengajuan = (data: PengajuanFormSchema) => {
@@ -194,6 +241,47 @@ export default function PengajuanPageView({
 
   const handleStatusChange = (pengajuanId: string, status: StatusPengajuan) => {
     updateStatusPengajuan({ id: pengajuanId, status });
+  };
+
+  const handleSubmitCreatePengeluaran = (data: ClientPengeluaranFormSchema) => {
+    console.log("Create pengeluaran", data);
+
+    const promise = async () => {
+      const publicUrl = await handleFileUpload(data.transaksiImage as File);
+      await createPengeluaran({ ...data, transaksiImageUrl: publicUrl });
+    };
+
+    toast.promise(promise(), {
+      loading: "Menyimpan data...",
+      success: "Pengeluaran berhasil dibuat!",
+      error: (err: unknown) => {
+        // 1. Cek apakah 'err' adalah instance dari kelas Error
+        //    (TRPCError juga merupakan turunan dari Error, jadi ini akan berfungsi)
+        if (err instanceof Error) {
+          // Jika ya, TypeScript sekarang tahu bahwa `err.message` pasti ada
+          return err.message;
+        }
+
+        // 2. Jika bukan, berikan pesan error default yang aman
+        return "Gagal membuat pemasukan: Terjadi kesalahan tidak dikenal.";
+      },
+    });
+  };
+
+  const handleFileUpload = async (file: File): Promise<string> => {
+    const presignedData = await createImagePresignedUrl({
+      originalFilename: file.name,
+      context: FolderBucket.Pengeluaran,
+    });
+
+    const publicUrl = await uploadFileToSignedUrl({
+      file,
+      path: presignedData.path,
+      token: presignedData.token,
+      bucket: Bucket.ImageTransaction,
+    });
+
+    return publicUrl;
   };
 
   const columns = createColumns({
@@ -245,6 +333,70 @@ export default function PengajuanPageView({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* STATUS PENGELUARAN FORM */}
+      {isMobile ? (
+        <Drawer
+          direction={isMobile ? "bottom" : "right"}
+          open={createFormPengeluaranOpen}
+          onOpenChange={setCreateFormPengeluaranOpen}
+        >
+          <DrawerContent>
+            <DrawerHeader className="pb-0">
+              <DrawerTitle>Tambah Pengeluaran Baru</DrawerTitle>
+            </DrawerHeader>
+
+            <div className="flex flex-col overflow-y-auto p-4">
+              <Form {...createPengeluaranForm}>
+                <PengeluaranCreateForm
+                  onSubmit={handleSubmitCreatePengeluaran}
+                />
+              </Form>
+            </div>
+
+            <DrawerFooter className="pt-2">
+              <Button
+                onClick={createPengeluaranForm.handleSubmit(
+                  handleSubmitCreatePengeluaran,
+                )}
+                disabled={isPendingCreatePengeluaran}
+              >
+                Buat Pengeluaran
+              </Button>
+              <DrawerClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DrawerClose>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <AlertDialog
+          open={createFormPengeluaranOpen}
+          onOpenChange={setCreateFormPengeluaranOpen}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Tambah Pengeluaran Baru</AlertDialogTitle>
+            </AlertDialogHeader>
+
+            <Form {...createPengeluaranForm}>
+              <PengeluaranCreateForm onSubmit={handleSubmitCreatePengeluaran} />
+            </Form>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <Button
+                onClick={createPengeluaranForm.handleSubmit(
+                  handleSubmitCreatePengeluaran,
+                )}
+                disabled={isPendingCreatePengeluaran}
+              >
+                Buat Pengeluaran
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
       <div className="px-4 lg:px-6">
         <DashboardHeader>
@@ -316,7 +468,7 @@ export default function PengajuanPageView({
                       onClick={createPengajuanForm.handleSubmit(
                         handleSubmitCreatePengajuan,
                       )}
-                      // disabled={isPendingCreate}
+                      disabled={isPendingCreate}
                     >
                       Buat Pengajuan
                     </Button>
