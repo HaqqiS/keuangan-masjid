@@ -128,13 +128,12 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
       },
     });
 
-  const { mutate: deletePemasukan, isPending: isPendingDelete } =
+  const { mutateAsync: deletePemasukan, isPending: isPendingDelete } =
     api.pemasukan.deletePemasukan.useMutation({
       onSuccess: async () => {
         await apiUtils.pemasukan.getPemasukan.invalidate();
         setDeletePemasukanDialogOpen(false);
         setSelectedPemasukanToDelete(null);
-        toast.success("Pemasukan berhasil dihapus");
       },
       onError: (error) => {
         toast.error("Pemasukan gagal dihapus", {
@@ -187,14 +186,9 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
       loading: "Menyimpan data...",
       success: "Pemasukan berhasil dibuat!",
       error: (err: unknown) => {
-        // 1. Cek apakah 'err' adalah instance dari kelas Error
-        //    (TRPCError juga merupakan turunan dari Error, jadi ini akan berfungsi)
         if (err instanceof Error) {
-          // Jika ya, TypeScript sekarang tahu bahwa `err.message` pasti ada
           return err.message;
         }
-
-        // 2. Jika bukan, berikan pesan error default yang aman
         return "Gagal membuat pemasukan: Terjadi kesalahan tidak dikenal.";
       },
     });
@@ -216,12 +210,10 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
   const handleSubmitEditPemasukan = async (data: ClientPemasukanFormSchema) => {
     if (!selectedPemasukanToEdit) return;
 
-    // --- 2. KONSISTENSI: Menggunakan toast.promise untuk edit ---
     const promise = async () => {
       let finalImageUrl = selectedPemasukanToEdit.transaksiImageUrl;
 
       if (data.transaksiImage instanceof File) {
-        // Hapus gambar lama jika ada
         if (selectedPemasukanToEdit.transaksiImageUrl) {
           const oldPath = selectedPemasukanToEdit.transaksiImageUrl
             .split("/")
@@ -229,7 +221,6 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
             .join("/");
           await deleteImage(oldPath);
         }
-        // Unggah gambar baru menggunakan helper
         finalImageUrl = await handleFileUpload(data.transaksiImage);
       }
 
@@ -247,15 +238,10 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
       loading: "Memperbarui data...",
       success: "Pemasukan berhasil diperbarui!",
       error: (err: unknown) => {
-        // 1. Cek apakah 'err' adalah instance dari kelas Error
-        //    (TRPCError juga merupakan turunan dari Error, jadi ini akan berfungsi)
         if (err instanceof Error) {
-          // Jika ya, TypeScript sekarang tahu bahwa `err.message` pasti ada
           return err.message;
         }
-
-        // 2. Jika bukan, berikan pesan error default yang aman
-        return "Gagal membuat pemasukan: Terjadi kesalahan tidak dikenal.";
+        return "Gagal memperbarui pemasukan: Terjadi kesalahan tidak dikenal.";
       },
     });
   };
@@ -269,7 +255,20 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
   };
   const handleSubmitDeletePemasukan = () => {
     if (!selectedPemasukanToDelete) return;
-    deletePemasukan({ pemasukanId: selectedPemasukanToDelete.id });
+    const result = deletePemasukan({
+      pemasukanId: selectedPemasukanToDelete.id,
+    });
+
+    toast.promise(result, {
+      loading: "Menghapus data...",
+      success: "Pemasukan berhasil dihapus!",
+      error: (err: unknown) => {
+        if (err instanceof Error) {
+          return err.message;
+        }
+        return "Gagal menghapus pemasukan: Terjadi kesalahan tidak dikenal.";
+      },
+    });
   };
 
   const columns = createColumns({

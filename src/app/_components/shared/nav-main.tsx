@@ -1,6 +1,10 @@
 "use client";
 
-import { type Icon } from "@tabler/icons-react";
+import {
+  IconCirclePlusFilled,
+  IconFileImport,
+  type Icon,
+} from "@tabler/icons-react";
 
 import {
   SidebarGroup,
@@ -11,6 +15,8 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { useCreatePengajuanStore } from "@/store/useCreatePengajuan.store";
 
 export function NavMain({
   items,
@@ -21,19 +27,20 @@ export function NavMain({
     icon?: Icon;
   }[];
 }) {
-  const pathname = usePathname(); // 2. Dapatkan path saat ini
-  // console.log("Current Path:", pathname);
+  const pathname = usePathname();
+  const { openForm } = useCreatePengajuanStore();
 
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
-        {/* <SidebarMenu>
+        <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
             <SidebarMenuButton
               tooltip="Buat Pengajuan"
               variant="outline"
               // className="text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
               className="border-accent-foreground hover:bg-accent-foreground hover:text-accent hover:border-accent active:text-primary-foreground min-w-8 border-1 duration-200 ease-linear"
+              onClick={openForm}
             >
               <IconCirclePlusFilled />
               <span>Buat Pengajuan</span>
@@ -47,7 +54,7 @@ export function NavMain({
               <span className="sr-only">Pengajuan</span>
             </Button>
           </SidebarMenuItem>
-        </SidebarMenu> */}
+        </SidebarMenu>
         <SidebarMenu>
           {items.map((item) => {
             const isActive = pathname === item.url;

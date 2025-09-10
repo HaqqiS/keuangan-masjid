@@ -20,7 +20,6 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -32,14 +31,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import PengajuanForm from "./pengajuan-form";
 import { toast } from "sonner";
 import { useState } from "react";
-import { PengajuanEditDrawer } from "./pengajuna-edit-drawer";
+import { PengajuanEditDrawer } from "./pengajuan-edit-drawer";
 import { StatusPengajuan } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import type { RouterOutputs } from "@/types";
@@ -52,6 +49,7 @@ import {
 import PengeluaranCreateForm from "../pengeluaran/pengeluaran-create-form";
 import { uploadFileToSignedUrl } from "@/lib/supabase";
 import { Bucket, FolderBucket } from "@/server/bucket";
+import { useCreatePengajuanStore } from "@/store/useCreatePengajuan.store";
 
 interface PengajuanPageViewProps {
   initialData: RouterOutputs["pengajuan"]["getPengajuan"];
@@ -65,8 +63,8 @@ export default function PengajuanPageView({
 
   const session = useSession();
   const userRole = session.data?.user.role;
+  const { openForm } = useCreatePengajuanStore();
 
-  const [createFormPengajuanOpen, setCreateFormPengajuanOpen] = useState(false);
   const [deletePengajuanDialogOpen, setDeletePengajuanDialogOpen] =
     useState(false);
   const [selectedPengajuanToDelete, setSelectedPengajuanToDelete] = useState<{
@@ -84,15 +82,6 @@ export default function PengajuanPageView({
   });
 
   // HOOK FORMS
-  const createPengajuanForm = useForm<PengajuanFormSchema>({
-    resolver: zodResolver(pengajuanFormSchema),
-    defaultValues: {
-      judul: "",
-      keterangan: "",
-      jumlah: 0,
-      kategoriId: "",
-    },
-  });
 
   const editPengajuanForm = useForm<PengajuanFormSchema>({
     resolver: zodResolver(pengajuanFormSchema),
@@ -115,35 +104,20 @@ export default function PengajuanPageView({
     ? Math.ceil(dataPengajuan.totalCount / pageSize)
     : 0;
 
-  const { mutate: createPengajuan, isPending: isPendingCreate } =
-    api.pengajuan.createPengajuan.useMutation({
-      onSuccess: async () => {
-        await apiUtils.pengajuan.getPengajuan.invalidate();
-        setCreateFormPengajuanOpen(false);
-        createPengajuanForm.reset();
-        toast.success("Pengajuan berhasil dibuat");
-      },
-      onError: (error) => {
-        toast.error("Pengajuan gagal dibuat", { description: error.message });
-      },
-    });
-
-  const { mutate: updatePengajuan, isPending: isPendingUpdate } =
+  const { mutateAsync: updatePengajuan, isPending: isPendingUpdate } =
     api.pengajuan.updatePengajuan.useMutation({
       onSuccess: async () => {
         await apiUtils.pengajuan.getPengajuan.invalidate();
-        toast.success("Pengajuan berhasil diperbarui");
         setSelectedPengajuanToEdit(null);
         setEditFormPengajuanOpen(false);
         editPengajuanForm.reset();
       },
     });
 
-  const { mutate: deletePengajuan, isPending: isPendingDelete } =
+  const { mutateAsync: deletePengajuan, isPending: isPendingDelete } =
     api.pengajuan.deletePengajuan.useMutation({
       onSuccess: async () => {
         await apiUtils.pengajuan.getPengajuan.invalidate();
-        toast.success("Pengajuan berhasil dihapus");
         setSelectedPengajuanToDelete(null);
         setDeletePengajuanDialogOpen(false);
       },
@@ -190,11 +164,6 @@ export default function PengajuanPageView({
   const { mutateAsync: createImagePresignedUrl } =
     api.file.createImagePresignedUrl.useMutation();
 
-  // HANDLERS
-  const handleSubmitCreatePengajuan = (data: PengajuanFormSchema) => {
-    createPengajuan(data);
-  };
-
   const handleClickEditPengajuan = (pengajuan: PengajuanTypeRouter) => {
     setEditFormPengajuanOpen(true);
     setSelectedPengajuanToEdit(pengajuan);
@@ -209,10 +178,20 @@ export default function PengajuanPageView({
 
   const handleSubmitEditPengajuan = (data: PengajuanFormSchema) => {
     if (!selectedPengajuanToEdit) return;
-    console.table(data);
-    updatePengajuan({
+    const result = updatePengajuan({
       id: selectedPengajuanToEdit.id,
       ...data,
+    });
+
+    toast.promise(result, {
+      loading: "Memperbarui data...",
+      success: "Pengajuan berhasil diperbarui!",
+      error: (err: unknown) => {
+        if (err instanceof Error) {
+          return err.message;
+        }
+        return "Gagal memperbarui pengajuan: Terjadi kesalahan tidak dikenal.";
+      },
     });
   };
 
@@ -226,7 +205,20 @@ export default function PengajuanPageView({
   const handleSubmitDeletePengajuan = () => {
     if (!selectedPengajuanToDelete) return;
 
-    deletePengajuan({ pengajuanId: selectedPengajuanToDelete.pengajuanId });
+    const result = deletePengajuan({
+      pengajuanId: selectedPengajuanToDelete.pengajuanId,
+    });
+
+    toast.promise(result, {
+      loading: "Menghapus data...",
+      success: "Pengajuan berhasil dihapus!",
+      error: (err: unknown) => {
+        if (err instanceof Error) {
+          return err.message;
+        }
+        return "Gagal menghapus pengajuan: Terjadi kesalahan tidak dikenal.";
+      },
+    });
   };
 
   const handleStatusChange = (pengajuanId: string, status: StatusPengajuan) => {
@@ -243,15 +235,12 @@ export default function PengajuanPageView({
       loading: "Menyimpan data...",
       success: "Pengeluaran berhasil dibuat!",
       error: (err: unknown) => {
-        // 1. Cek apakah 'err' adalah instance dari kelas Error
-        //    (TRPCError juga merupakan turunan dari Error, jadi ini akan berfungsi)
         if (err instanceof Error) {
-          // Jika ya, TypeScript sekarang tahu bahwa `err.message` pasti ada
           return err.message;
         }
 
         // 2. Jika bukan, berikan pesan error default yang aman
-        return "Gagal membuat pemasukan: Terjadi kesalahan tidak dikenal.";
+        return "Gagal membuat pengeluaran : Terjadi kesalahan tidak dikenal.";
       },
     });
   };
@@ -397,72 +386,9 @@ export default function PengajuanPageView({
             </div>
 
             {isMobile ? (
-              <Drawer
-                direction={isMobile ? "bottom" : "right"}
-                open={createFormPengajuanOpen}
-                onOpenChange={setCreateFormPengajuanOpen}
-              >
-                <DrawerTrigger asChild>
-                  <Button>Tambah</Button>
-                </DrawerTrigger>
-                <DrawerContent>
-                  <DrawerHeader className="pb-0">
-                    <DrawerTitle>Tambah Pengajuan Pengeluaran Baru</DrawerTitle>
-                  </DrawerHeader>
-
-                  <div className="flex flex-col overflow-y-auto p-4">
-                    <Form {...createPengajuanForm}>
-                      <PengajuanForm onSubmit={handleSubmitCreatePengajuan} />
-                    </Form>
-                  </div>
-
-                  <DrawerFooter className="pt-2">
-                    <Button
-                      onClick={createPengajuanForm.handleSubmit(
-                        handleSubmitCreatePengajuan,
-                      )}
-                      disabled={isPendingCreate}
-                    >
-                      Buat Pengajuan
-                    </Button>
-                    <DrawerClose asChild>
-                      <Button variant="outline">Cancel</Button>
-                    </DrawerClose>
-                  </DrawerFooter>
-                </DrawerContent>
-              </Drawer>
+              <Button onClick={openForm}>Tambah</Button>
             ) : (
-              <AlertDialog
-                open={createFormPengajuanOpen}
-                onOpenChange={setCreateFormPengajuanOpen}
-              >
-                <AlertDialogTrigger asChild>
-                  <Button>Tambah Pengajuan</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Tambah Pengajuan Pengeluaran Baru
-                    </AlertDialogTitle>
-                  </AlertDialogHeader>
-
-                  <Form {...createPengajuanForm}>
-                    <PengajuanForm onSubmit={handleSubmitCreatePengajuan} />
-                  </Form>
-
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <Button
-                      onClick={createPengajuanForm.handleSubmit(
-                        handleSubmitCreatePengajuan,
-                      )}
-                      disabled={isPendingCreate}
-                    >
-                      Buat Pengajuan
-                    </Button>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <Button onClick={openForm}>Tambah Pengajuan</Button>
             )}
           </div>
         </DashboardHeader>

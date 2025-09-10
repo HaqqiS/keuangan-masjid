@@ -106,13 +106,12 @@ export default function PengeluaranPageView({
       },
     });
 
-  const { mutate: deletePengeluaran, isPending: isPendingDelete } =
+  const { mutateAsync: deletePengeluaran, isPending: isPendingDelete } =
     api.pengeluaran.deletePengeluaran.useMutation({
       onSuccess: async () => {
         await apiUtils.pengeluaran.getPengeluaran.invalidate();
         setDeletePengeluaranDialogOpen(false);
         setSelectedPengeluaranToDelete(null);
-        toast.success("Pengeluaran berhasil dihapus");
       },
       onError: (error) => {
         toast.error("Pengeluaran gagal dihapus", {
@@ -178,7 +177,7 @@ export default function PengeluaranPageView({
         }
 
         // 2. Jika bukan, berikan pesan error default yang aman
-        return "Gagal membuat pemasukan: Terjadi kesalahan tidak dikenal.";
+        return "Gagal membuat pengeluaran: Terjadi kesalahan tidak dikenal.";
       },
     });
   };
@@ -195,7 +194,20 @@ export default function PengeluaranPageView({
   };
   const handleSubmitDeletePengeluaran = () => {
     if (!selectedPengeluaranToDelete) return;
-    deletePengeluaran({ pengeluaranId: selectedPengeluaranToDelete.id });
+    const result = deletePengeluaran({
+      pengeluaranId: selectedPengeluaranToDelete.id,
+    });
+
+    toast.promise(result, {
+      loading: "Menghapus data...",
+      success: "Pengeluaran berhasil dihapus!",
+      error: (err: unknown) => {
+        if (err instanceof Error) {
+          return err.message;
+        }
+        return "Gagal menghapus pengeluaran: Terjadi kesalahan tidak dikenal.";
+      },
+    });
   };
 
   const handleClickEditPengeluaran = (pengeluaran: PengeluaranTypeRouter) => {
@@ -250,7 +262,7 @@ export default function PengeluaranPageView({
         }
 
         // 2. Jika bukan, berikan pesan error default yang aman
-        return "Gagal membuat pengeluaran: Terjadi kesalahan tidak dikenal.";
+        return "Gagal memperbarui pengeluaran: Terjadi kesalahan tidak dikenal.";
       },
     });
   };
