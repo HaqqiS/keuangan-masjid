@@ -40,7 +40,7 @@ export const columns = ({
 }: {
   onEditClick: (item: PengajuanTypeRouter) => void;
   onDeleteClick: (pengajuanId: string, pengajuanJudul: string) => void;
-  onStatusChange: (pengajuanId: string, status: StatusPengajuan) => void;
+  onStatusChange: (data: PengajuanTypeRouter, status: StatusPengajuan) => void;
   isPendingStatusChange: boolean;
   role: UserRole | undefined;
 }): ColumnDef<PengajuanTypeRouter>[] => [
@@ -151,7 +151,7 @@ export const columns = ({
               defaultValue={row.original.status}
               disabled={isPendingStatusChange}
               onValueChange={(value) => {
-                onStatusChange(row.original.id, value as StatusPengajuan);
+                onStatusChange(row.original, value as StatusPengajuan);
               }}
             >
               <SelectTrigger

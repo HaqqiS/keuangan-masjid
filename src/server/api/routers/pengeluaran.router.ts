@@ -3,6 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import z from "zod";
 import { Bucket } from "@/server/bucket";
 import { fileRouter } from "./file.router";
+import { TRPCError } from "@trpc/server";
 
 export const pengeluaranRouter = createTRPCRouter({
   getPengeluaran: protectedProcedure
@@ -88,6 +89,42 @@ export const pengeluaranRouter = createTRPCRouter({
       });
 
       return newPengeluaran;
+    }),
+
+  createPengeluaranFromPengajuan: protectedProcedure
+    .input(serverPengeluaranFormSchema)
+    .mutation(async ({ input, ctx }) => {
+      const { db, session } = ctx;
+      if (!input.pengajuanId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Pengajuan ID wajib diisi.",
+        });
+      }
+
+      // Gunakan $transaction untuk menjamin atomicity
+      return db.$transaction(async (prisma) => {
+        // 1. Update status pengajuan menjadi APPROVED
+        await prisma.pengajuan.update({
+          where: { id: input.pengajuanId! },
+          data: { status: "APPROVED" },
+        });
+
+        // 2. Buat record pengeluaran baru
+        const newPengeluaran = await prisma.pengeluaran.create({
+          data: {
+            name: input.name,
+            jumlah: input.jumlah,
+            keterangan: input.keterangan,
+            kategoriId: input.kategoriId,
+            transaksiImageUrl: input.transaksiImageUrl,
+            createdById: session.user.id,
+            pengajuanId: input.pengajuanId,
+          },
+        });
+
+        return newPengeluaran;
+      });
     }),
 
   deletePengeluaran: protectedProcedure

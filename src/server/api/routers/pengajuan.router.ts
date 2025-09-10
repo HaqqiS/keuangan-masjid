@@ -91,6 +91,15 @@ export const pengajuanRouter = createTRPCRouter({
     }),
 
   // NANTI GANTI DENGAN PROCEDURE YANG SESUAI ROLE
+  rejectPengajuan: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(({ ctx, input }) => {
+      return ctx.db.pengajuan.update({
+        where: { id: input.id },
+        data: { status: StatusPengajuan.REJECTED },
+      });
+    }),
+
   updateStatusPengajuan: protectedProcedure
     .input(
       z.object({

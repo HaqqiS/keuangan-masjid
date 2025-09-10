@@ -123,29 +123,25 @@ export default function PengajuanPageView({
       },
     });
 
-  const { mutate: updateStatusPengajuan, isPending: isPendingUpdateStatus } =
-    api.pengajuan.updateStatusPengajuan.useMutation({
-      onSuccess: async (result) => {
-        await apiUtils.pengajuan.getPengajuan.invalidate();
-        toast.success("Status pengajuan berhasil diperbarui");
-        if (result?.status === StatusPengajuan.APPROVED) {
-          setCreateFormPengeluaranOpen(true);
-
-          createPengeluaranForm.reset({
-            name: result.judul,
-            jumlah: Number(result.jumlah),
-            keterangan: result.keterangan ?? undefined,
-            kategoriId: result.kategoriId,
-            pengajuanId: result.id,
-          });
-        }
-      },
+  const { mutateAsync: rejectPengajuan, isPending: isPendingReject } =
+    api.pengajuan.rejectPengajuan.useMutation({
+      onSuccess: () => apiUtils.pengajuan.getPengajuan.invalidate(),
       onError: (error) => {
-        toast.error("Status pengajuan gagal diperbarui", {
-          description: error.message,
-        });
+        toast.error("Pengajuan gagal ditolak", { description: error.message });
       },
     });
+
+  const {
+    mutateAsync: createPengeluaranFromPengajuan,
+    isPending: isPendingCreatePengeluaranFromPengajuan,
+  } = api.pengeluaran.createPengeluaranFromPengajuan.useMutation({
+    onSuccess: async () => {
+      setCreateFormPengeluaranOpen(false);
+      createPengeluaranForm.reset();
+      await apiUtils.pengajuan.getPengajuan.invalidate();
+      await apiUtils.pengeluaran.getPengeluaran.invalidate();
+    },
+  });
 
   const {
     mutateAsync: createPengeluaran,
@@ -221,27 +217,102 @@ export default function PengajuanPageView({
     });
   };
 
-  const handleStatusChange = (pengajuanId: string, status: StatusPengajuan) => {
-    updateStatusPengajuan({ id: pengajuanId, status });
+  // const handleStatusChange = async (
+  //   data: PengajuanTypeRouter,
+  //   status: StatusPengajuan,
+  // ) => {
+  //   if (status === StatusPengajuan.APPROVED) {
+  //     setCreateFormPengeluaranOpen(true);
+
+  //     createPengeluaranForm.reset({
+  //       name: data.judul,
+  //       jumlah: Number(data.jumlah),
+  //       keterangan: data.keterangan ?? undefined,
+  //       kategoriId: data.kategori.id,
+  //       pengajuanId: data.id,
+  //     });
+  //   } else {
+  //     await updateStatusPengajuan({ id: data.id, status });
+  //   }
+  // };
+  const handleStatusChange = (
+    data: PengajuanTypeRouter,
+    status: StatusPengajuan,
+  ) => {
+    // Handler ini sekarang hanya punya DUA tugas:
+    if (status === StatusPengajuan.APPROVED) {
+      // 1. Jika APPROVED: Buka form finalisasi
+      setCreateFormPengeluaranOpen(true);
+      createPengeluaranForm.reset({
+        name: data.judul,
+        jumlah: Number(data.jumlah),
+        keterangan: data.keterangan ?? "",
+        kategoriId: data.kategori.id,
+        pengajuanId: data.id,
+        transaksiImage: null,
+      });
+    } else if (status === StatusPengajuan.REJECTED) {
+      // 2. Jika REJECTED: Langsung panggil mutasi reject
+      const promise = rejectPengajuan({ id: data.id });
+      toast.promise(promise, {
+        loading: "Menolak pengajuan...",
+        success: "Pengajuan telah ditolak.",
+        error: (err) =>
+          err instanceof Error ? err.message : "Gagal menolak pengajuan",
+      });
+    }
   };
 
-  const handleSubmitCreatePengeluaran = (data: ClientPengeluaranFormSchema) => {
+  // const handleSubmitCreatePengeluaran = (data: ClientPengeluaranFormSchema) => {
+  //   const promise = async () => {
+  //     await updateStatusPengajuan({
+  //       id: data.pengajuanId ?? "",
+  //       status: StatusPengajuan.APPROVED,
+  //     });
+
+  //     const publicUrl = await handleFileUpload(data.transaksiImage as File);
+  //     await createPengeluaran({ ...data, transaksiImageUrl: publicUrl });
+  //   };
+
+  //   toast.promise(promise(), {
+  //     loading: "Menyimpan data...",
+  //     success: "Pengeluaran berhasil dibuat!",
+  //     error: (err: unknown) => {
+  //       if (err instanceof Error) {
+  //         return err.message;
+  //       }
+
+  //       // 2. Jika bukan, berikan pesan error default yang aman
+  //       return "Gagal membuat pengeluaran : Terjadi kesalahan tidak dikenal.";
+  //     },
+  //   });
+  // };
+  const handleSubmitCreatePengeluaran = async (
+    data: ClientPengeluaranFormSchema,
+  ) => {
+    if (!(data.transaksiImage instanceof File)) {
+      toast.error("Bukti transaksi wajib diunggah.");
+      return;
+    }
+
     const promise = async () => {
       const publicUrl = await handleFileUpload(data.transaksiImage as File);
-      await createPengeluaran({ ...data, transaksiImageUrl: publicUrl });
+      // Panggil mutasi BARU yang atomik
+      await createPengeluaranFromPengajuan({
+        name: data.name,
+        jumlah: data.jumlah,
+        keterangan: data.keterangan,
+        kategoriId: data.kategoriId,
+        pengajuanId: data.pengajuanId,
+        transaksiImageUrl: publicUrl,
+      });
     };
 
     toast.promise(promise(), {
-      loading: "Menyimpan data...",
+      loading: "Menyimpan & menyelesaikan pengajuan...",
       success: "Pengeluaran berhasil dibuat!",
-      error: (err: unknown) => {
-        if (err instanceof Error) {
-          return err.message;
-        }
-
-        // 2. Jika bukan, berikan pesan error default yang aman
-        return "Gagal membuat pengeluaran : Terjadi kesalahan tidak dikenal.";
-      },
+      error: (err) =>
+        err instanceof Error ? err.message : "Gagal menyimpan pengeluaran",
     });
   };
 
@@ -264,8 +335,11 @@ export default function PengajuanPageView({
   const columns = createColumns({
     onEditClick: handleClickEditPengajuan,
     onDeleteClick: handleClickDeletePengajuan,
-    onStatusChange: handleStatusChange,
-    isPendingStatusChange: isPendingUpdateStatus,
+    onStatusChange: (data, status) => {
+      void handleStatusChange(data, status);
+    },
+    isPendingStatusChange:
+      isPendingCreatePengeluaranFromPengajuan || isPendingReject,
     role: userRole,
   });
 
