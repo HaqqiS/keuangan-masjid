@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { type schema } from "./data-table";
+import { type schema } from "@/app/_components/shared/data-table-generic";
 
 export const chartData = [
   { month: "January", desktop: 186, mobile: 80 },

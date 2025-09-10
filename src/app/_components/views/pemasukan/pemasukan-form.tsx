@@ -71,7 +71,7 @@ export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 overflow-y-scroll">
         <div className="grid gap-3">
           <FormField
             control={form.control}
@@ -192,6 +192,7 @@ export default function PemasukanForm({ onSubmit }: PemasukanFormProps) {
                 alt="Preview"
                 height={384}
                 width={384}
+                // fill
                 // className="rounded-md object-cover"
                 className="h-auto w-auto rounded-md object-cover"
               />

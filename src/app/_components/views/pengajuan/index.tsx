@@ -48,7 +48,6 @@ import type { PaginationState } from "@tanstack/react-table";
 import {
   clientPengeluaranFormSchema,
   type ClientPengeluaranFormSchema,
-  type PengeluaranTypeRouter,
 } from "@/types/pengeluaran.type";
 import PengeluaranCreateForm from "../pengeluaran/pengeluaran-create-form";
 import { uploadFileToSignedUrl } from "@/lib/supabase";
@@ -79,8 +78,6 @@ export default function PengajuanPageView({
     useState<PengajuanTypeRouter | null>(null);
   const [createFormPengeluaranOpen, setCreateFormPengeluaranOpen] =
     useState(false);
-  const [pengeluaranToCreate, setPengeluaranToCreate] =
-    useState<ClientPengeluaranFormSchema | null>(null);
   const [{ pageIndex, pageSize }, setPagination] = useState<PaginationState>({
     pageIndex: 0, // Halaman awal
     pageSize: 10, // Default item per halaman
@@ -159,13 +156,7 @@ export default function PengajuanPageView({
         toast.success("Status pengajuan berhasil diperbarui");
         if (result?.status === StatusPengajuan.APPROVED) {
           setCreateFormPengeluaranOpen(true);
-          setPengeluaranToCreate({
-            name: result.judul,
-            jumlah: Number(result.jumlah),
-            keterangan: result.keterangan ?? "",
-            kategoriId: result.kategoriId,
-            pengajuanId: result.id,
-          });
+
           createPengeluaranForm.reset({
             name: result.judul,
             jumlah: Number(result.jumlah),
@@ -188,7 +179,6 @@ export default function PengajuanPageView({
   } = api.pengeluaran.createPengeluaran.useMutation({
     onSuccess: async () => {
       setCreateFormPengeluaranOpen(false);
-      setPengeluaranToCreate(null);
       createPengeluaranForm.reset();
       await apiUtils.pengeluaran.getPengeluaran.invalidate();
     },
@@ -244,8 +234,6 @@ export default function PengajuanPageView({
   };
 
   const handleSubmitCreatePengeluaran = (data: ClientPengeluaranFormSchema) => {
-    console.log("Create pengeluaran", data);
-
     const promise = async () => {
       const publicUrl = await handleFileUpload(data.transaksiImage as File);
       await createPengeluaran({ ...data, transaksiImageUrl: publicUrl });

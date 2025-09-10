@@ -1,10 +1,12 @@
 import Link from "next/link";
 
 import { LatestPost } from "@/app/_components/views/post";
-import { auth, signIn, signOut } from "@/server/auth";
+import {
+  auth,
+  // signIn, signOut
+} from "@/server/auth";
 import { api, HydrateClient } from "@/trpc/server";
-import { Button } from "@/components/ui/button";
-import LogoutButton from "./_components/shared/signin-logout-button";
+// import LogoutButton from "./_components/shared/signin-logout-button";
 import SigninLogoutButton from "./_components/shared/signin-logout-button";
 // import { signIn, signOut } from "next-auth/react";
 

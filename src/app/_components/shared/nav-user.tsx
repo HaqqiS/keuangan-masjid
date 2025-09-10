@@ -1,7 +1,7 @@
 "use client";
 
 import { IconDotsVertical, IconLogout } from "@tabler/icons-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,12 +20,12 @@ import type { UserRole } from "@prisma/client";
 import { signOut } from "next-auth/react";
 
 export function NavUser({
-  id,
+  // id,
   name,
   email,
   role,
 }: {
-  id: string;
+  // id: string;
   name: string;
   role: UserRole;
   email: string;

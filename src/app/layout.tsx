@@ -6,7 +6,6 @@ import { Geist } from "next/font/google";
 import { TRPCReactProvider } from "@/trpc/react";
 import { ThemeProvider } from "./_components/providers/theme-provider";
 import { SessionProvider } from "next-auth/react";
-import type { Session } from "next-auth";
 import { Toaster } from "@/components/ui/sonner";
 import { auth } from "@/server/auth"; // <-- 1. Impor 'auth' dari file konfigurasi Anda
 

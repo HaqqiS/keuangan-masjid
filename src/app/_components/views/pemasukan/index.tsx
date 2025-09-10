@@ -87,16 +87,14 @@ export function PemasukanViewPage({ initialData }: PemasukanViewPageProps) {
 
   // MUTATION & QUERY
 
-  const { data: dataPemasukan, isLoading: isLoadingPemasukan } =
-    api.pemasukan.getPemasukan.useQuery(
-      { pageIndex, pageSize },
-      {
-        // initialData: initialData,
-        initialData:
-          pageIndex === 0 && pageSize === 10 ? initialData : undefined,
-        placeholderData: keepPreviousData,
-      },
-    );
+  const { data: dataPemasukan } = api.pemasukan.getPemasukan.useQuery(
+    { pageIndex, pageSize },
+    {
+      // initialData: initialData,
+      initialData: pageIndex === 0 && pageSize === 10 ? initialData : undefined,
+      placeholderData: keepPreviousData,
+    },
+  );
 
   const pageCount = dataPemasukan
     ? Math.ceil(dataPemasukan.totalCount / pageSize)

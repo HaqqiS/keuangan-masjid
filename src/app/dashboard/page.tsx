@@ -2,8 +2,6 @@
 import { SectionCards } from "@/app/_components/views/dashboard/section-cards";
 import DashboardPageView from "../_components/views/dashboard";
 import { api } from "@/trpc/server";
-// import data from "./data.json";
-// import { DataTable } from "../_components/shared/data-table-generic";
 
 export default async function DashboardPage() {
   const dataPengajuan = await api.dashboard.getPengajuan();

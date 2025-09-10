@@ -1,6 +1,6 @@
 // export { auth as middleware } from "@/server/auth/index";
 import { auth } from "@/server/auth";
-import { UserRole } from "@prisma/client";
+// import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import type { NextAuthRequest } from "node_modules/next-auth/lib";
 import { navMain } from "./constants/nav-menu.constant";

@@ -48,6 +48,7 @@ declare module "next-auth/jwt" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authConfig = {
+  // trustHost: true,
   session: { strategy: "jwt", maxAge: 60 * 60 * 24 }, // 1 day
   adapter: PrismaAdapter(db),
   pages: {
@@ -108,7 +109,8 @@ export const authConfig = {
     //   if (pathname === "/dashboard") return !!auth;
     //   return true;
     // },
-    async jwt({ token, trigger, session, account, user }) {
+    // async jwt({ token, trigger, session, account, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id ?? "";
         token.name = user.name ?? "";

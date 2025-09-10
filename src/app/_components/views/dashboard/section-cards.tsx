@@ -25,14 +25,8 @@ export function SectionCards() {
   const { data: dashboardStats, isLoading: isLoadingDashboardStats } =
     api.dashboard.getDashboardStats.useQuery();
 
-  const {
-    saldoAkhir,
-    pengeluaranBulanIni,
-    saldo,
-    pengajuan,
-    pemasukan,
-    pengeluaran,
-  } = dashboardStats ?? {};
+  const { saldoAkhir, saldo, pengajuan, pemasukan, pengeluaran } =
+    dashboardStats ?? {};
 
   // Komponen kecil untuk menampilkan persentase
   const ChangeBadge = ({ value }: { value: number }) => {
@@ -52,13 +46,14 @@ export function SectionCards() {
       </>
     );
   };
+
   if (isLoadingDashboardStats) {
     return (
       <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-        <Skeleton className="h-45.5" />
-        <Skeleton className="h-45.5" />
-        <Skeleton className="h-45.5" />
-        <Skeleton className="h-45.5" />
+        <Skeleton className="h-52" />
+        <Skeleton className="h-52" />
+        <Skeleton className="h-52" />
+        <Skeleton className="h-52" />
       </div>
     );
   }
@@ -66,11 +61,13 @@ export function SectionCards() {
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Saldo</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {/* $1,250.00 */}
-            {toRupiah(saldoAkhir ?? 0)}
-          </CardTitle>
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <CardDescription>Saldo</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {/* $1,250.00 */}
+              {toRupiah(saldoAkhir ?? 0)}
+            </CardTitle>
+          </div>
           <CardAction>
             <Badge variant="outline">
               {saldo?.saldoChange !== undefined && (
@@ -101,10 +98,12 @@ export function SectionCards() {
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Pengajuan Bulan Ini</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {pengajuan?.totalPengajuanBulanIni ?? 0}
-          </CardTitle>
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <CardDescription>Pengajuan Bulan Ini</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {pengajuan?.totalPengajuanBulanIni ?? 0}
+            </CardTitle>
+          </div>
           <CardAction>
             <Badge variant="outline">
               {saldo?.saldoChange !== undefined && (
@@ -148,10 +147,12 @@ export function SectionCards() {
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Pemasukan Bulan Ini</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {toRupiah(pemasukan?.pemasukanBulanIni ?? 0)}
-          </CardTitle>
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <CardDescription>Pemasukan Bulan Ini</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {toRupiah(pemasukan?.pemasukanBulanIni ?? 0)}
+            </CardTitle>
+          </div>
           <CardAction>
             <Badge variant="outline">
               {pemasukan?.pemasukanChange !== undefined && (
@@ -181,10 +182,12 @@ export function SectionCards() {
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Pengeluaran Bulan Ini</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {toRupiah(pengeluaran?.pengeluaranBulanIni ?? 0)}
-          </CardTitle>
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <CardDescription>Pengeluaran Bulan Ini</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {toRupiah(pengeluaran?.pengeluaranBulanIni ?? 0)}
+            </CardTitle>
+          </div>
           <CardAction>
             <Badge variant="outline">
               {pengeluaran?.pengeluaranChange !== undefined && (
