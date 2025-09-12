@@ -10,52 +10,52 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
-import { loginFormSchema, type LoginFormSchema } from "@/types/user.types";
+import {
+  registerFormSchema,
+  type RegisterFormSchema,
+} from "@/types/user.types";
 import { useForm } from "react-hook-form";
-import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+// import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import InputPassword from "@/app/_components/shared/input-password";
+import { api } from "@/trpc/react";
 import Link from "next/link";
-import { useState } from "react";
 
-export default function LoginForm() {
+export default function RegisterForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl");
-  const [isPending, setIsPending] = useState(false);
 
   // HOOK FORMS
-  const loginForm = useForm<LoginFormSchema>({
-    resolver: zodResolver(loginFormSchema),
+  const registerForm = useForm<RegisterFormSchema>({
+    resolver: zodResolver(registerFormSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
     },
   });
-  const { setError } = loginForm;
+  const { setError } = registerForm;
+
+  //MUTATIONS
+  const { mutateAsync: register, isPending: isPendingRegister } =
+    api.user.registerPengurus.useMutation();
 
   //HANDLERS
-  const handleSubmit = async (data: LoginFormSchema) => {
-    setIsPending(true);
+  const handleSubmit = async (data: RegisterFormSchema) => {
     let toastId: string | number | undefined;
 
     try {
-      // 2. Tampilkan toast loading di awal
-      toastId = toast.loading("Mencoba untuk login...");
+      toastId = toast.loading("Mendaftarkan akun...");
+      console.log("Toast ID:", toastId);
 
-      const result = await signIn("credentials", {
+      await register({
+        name: data.name,
         email: data.email,
         password: data.password,
-        redirect: false,
       });
 
-      if (result?.error) {
-        throw new Error("Email atau password yang Anda masukkan salah.");
-      }
-
-      toast.success("Login berhasil!", { id: toastId });
-      router.push(callbackUrl ?? "/dashboard"); // Arahkan ke dashboard
+      toast.success("Akun berhasil didaftarkan!", { id: toastId });
+      router.push("/auth/login");
     } catch (error) {
       if (toastId) {
         toast.dismiss(toastId);
@@ -65,22 +65,22 @@ export default function LoginForm() {
         setError("root", { message: error.message });
         toast.error(error.message);
       } else {
-        const errorMessage = "Terjadi kesalahan tidak dikenal.";
+        const errorMessage =
+          "Gagal mendaftarkan akun: Terjadi kesalahan tidak dikenal.";
         setError("root", { message: errorMessage });
         toast.error(errorMessage);
       }
-    } finally {
-      setIsPending(false);
     }
   };
 
   return (
-    <Form {...loginForm}>
-      <form onSubmit={loginForm.handleSubmit(handleSubmit)}>
+    // <form onSubmit={handleSubmit}>
+    <Form {...registerForm}>
+      <form onSubmit={registerForm.handleSubmit(handleSubmit)}>
         <div className="flex flex-col gap-6">
           <div className="grid gap-3">
             <FormField
-              control={loginForm.control}
+              control={registerForm.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
@@ -100,7 +100,22 @@ export default function LoginForm() {
           </div>
           <div className="grid gap-3">
             <FormField
-              control={loginForm.control}
+              control={registerForm.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ahmad" {...field} required />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid gap-3">
+            <FormField
+              control={registerForm.control}
               name="password"
               render={({ field }) => (
                 <FormItem>
@@ -115,7 +130,7 @@ export default function LoginForm() {
           </div>
           <div className="flex flex-col gap-3">
             <FormField
-              control={loginForm.control}
+              control={registerForm.control}
               name="root"
               render={({ fieldState }) => (
                 <FormMessage>{fieldState.error?.message}</FormMessage>
@@ -124,16 +139,18 @@ export default function LoginForm() {
             <Button
               type="submit"
               className="w-full"
-              disabled={loginForm.formState.isSubmitting || isPending}
+              disabled={
+                registerForm.formState.isSubmitting || isPendingRegister
+              }
             >
-              Login
+              Register
             </Button>
           </div>
         </div>
         <div className="mt-4 text-center text-sm">
-          Belum punya akun?{" "}
-          <Link href="/auth/register" className="underline underline-offset-4">
-            Daftar
+          Sudah punya akun?{" "}
+          <Link href="/auth/login" className="underline underline-offset-4">
+            Login
           </Link>
         </div>
       </form>

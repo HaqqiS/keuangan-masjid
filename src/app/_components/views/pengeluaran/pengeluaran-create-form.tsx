@@ -94,57 +94,57 @@ export default function PengeluaranCreateForm({
             )}
           />
         </div>
-        <div className="grid gap-6 md:grid-cols-2 md:gap-3">
-          <div className="grid gap-3">
-            <FormField
-              control={form.control}
-              name="jumlah"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Jumlah</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="1000000"
-                      type="number"
-                      {...field}
-                      required
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="grid gap-3">
-            <FormField
-              control={form.control}
-              name="kategoriId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Kategori Pengeluaran</FormLabel>
-                  <FormControl>
-                    <Select
-                      value={field.value}
-                      onValueChange={(value) => field.onChange(value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Pilih kategori" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {kategoris?.map((kategori) => (
-                          <SelectItem key={kategori.id} value={kategori.id}>
-                            {kategori.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+        {/* <div className="grid gap-6 md:grid-cols-2 md:gap-3"> */}
+        <div className="grid gap-3">
+          <FormField
+            control={form.control}
+            name="jumlah"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Jumlah</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="1000000"
+                    type="number"
+                    {...field}
+                    required
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
+        <div className="grid gap-3">
+          <FormField
+            control={form.control}
+            name="kategoriId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Kategori Pengeluaran</FormLabel>
+                <FormControl>
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => field.onChange(value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih kategori" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {kategoris?.map((kategori) => (
+                        <SelectItem key={kategori.id} value={kategori.id}>
+                          {kategori.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        {/* </div> */}
         <div className="grid gap-3">
           <FormField
             control={form.control}

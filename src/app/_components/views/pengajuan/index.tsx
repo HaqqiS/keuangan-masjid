@@ -143,20 +143,6 @@ export default function PengajuanPageView({
     },
   });
 
-  const {
-    mutateAsync: createPengeluaran,
-    isPending: isPendingCreatePengeluaran,
-  } = api.pengeluaran.createPengeluaran.useMutation({
-    onSuccess: async () => {
-      setCreateFormPengeluaranOpen(false);
-      createPengeluaranForm.reset();
-      await apiUtils.pengeluaran.getPengeluaran.invalidate();
-    },
-    onError: (error) => {
-      toast.error("Pengeluaran gagal dibuat", { description: error.message });
-    },
-  });
-
   const { mutateAsync: createImagePresignedUrl } =
     api.file.createImagePresignedUrl.useMutation();
 
@@ -263,30 +249,6 @@ export default function PengajuanPageView({
     }
   };
 
-  // const handleSubmitCreatePengeluaran = (data: ClientPengeluaranFormSchema) => {
-  //   const promise = async () => {
-  //     await updateStatusPengajuan({
-  //       id: data.pengajuanId ?? "",
-  //       status: StatusPengajuan.APPROVED,
-  //     });
-
-  //     const publicUrl = await handleFileUpload(data.transaksiImage as File);
-  //     await createPengeluaran({ ...data, transaksiImageUrl: publicUrl });
-  //   };
-
-  //   toast.promise(promise(), {
-  //     loading: "Menyimpan data...",
-  //     success: "Pengeluaran berhasil dibuat!",
-  //     error: (err: unknown) => {
-  //       if (err instanceof Error) {
-  //         return err.message;
-  //       }
-
-  //       // 2. Jika bukan, berikan pesan error default yang aman
-  //       return "Gagal membuat pengeluaran : Terjadi kesalahan tidak dikenal.";
-  //     },
-  //   });
-  // };
   const handleSubmitCreatePengeluaran = async (
     data: ClientPengeluaranFormSchema,
   ) => {
@@ -410,7 +372,7 @@ export default function PengajuanPageView({
                 onClick={createPengeluaranForm.handleSubmit(
                   handleSubmitCreatePengeluaran,
                 )}
-                disabled={isPendingCreatePengeluaran}
+                disabled={isPendingCreatePengeluaranFromPengajuan}
               >
                 Buat Pengeluaran
               </Button>
@@ -440,7 +402,7 @@ export default function PengajuanPageView({
                 onClick={createPengeluaranForm.handleSubmit(
                   handleSubmitCreatePengeluaran,
                 )}
-                disabled={isPendingCreatePengeluaran}
+                disabled={isPendingCreatePengeluaranFromPengajuan}
               >
                 Buat Pengeluaran
               </Button>

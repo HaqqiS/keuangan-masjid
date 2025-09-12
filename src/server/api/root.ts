@@ -6,6 +6,7 @@ import { pengeluaranRouter } from "./routers/pengeluaran.router";
 import { pengajuanRouter } from "./routers/pengajuan.router";
 import { dashboardRouter } from "./routers/dashboard.router";
 import { fileRouter } from "./routers/file.router";
+import { userRouter } from "./routers/user.router";
 
 /**
  * This is the primary router for your server.
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
   pengajuan: pengajuanRouter,
   dashboard: dashboardRouter,
   file: fileRouter,
+  user: userRouter,
 });
 
 // export type definition of API

@@ -15,6 +15,7 @@ export default function InputPassword({ ...props }) {
         id="password"
         type={showPassword ? "text" : "password"}
         name="password"
+        placeholder="••••••••"
         required
         {...props}
       />
